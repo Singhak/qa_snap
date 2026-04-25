@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CaseType {
+  POSITIVE
+  NEGATIVE
+  EDGE
+  BOUNDARY
+}
+
+enum GenerationMode {
+  SMOKE
+  REGRESSION
+  EDGE_HEAVY
+}
+
+enum RecordStatus {
+  DRAFT
+  SAVED
+  ARCHIVED
+}
+
+enum GenerationFeatureType {
+  BUG_REPORT
+  TEST_CASE
+}
+
+enum GenerationStatus {
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id               String          @id @default(uuid())
+  name             String?
+  email            String          @unique
+  passwordHash     String
+  plan             Plan            @default(FREE)
+  monthlyQuota     Int             @default(20)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  projects         Project[]
+  bugReports       BugReport[]
+  testCaseBatches  TestCaseBatch[]
+  generationLogs   GenerationLog[]
+  usageEvents      UsageEvent[]
+}
+
+model Project {
+  id               String           @id @default(uuid())
+  userId           String
+  name             String
+  description      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bugReports       BugReport[]
+  testCaseBatches  TestCaseBatch[]
+  testCases        TestCase[]
+  generationLogs   GenerationLog[]
+
+  @@index([userId])
+}
+
+model BugReport {
+  id                 String        @id @default(uuid())
+  projectId          String
+  createdById        String
+  rawInput           String
+  expectedInput      String?
+  actualInput        String?
+  environmentInput   String?
+  logsInput          String?
+  title              String
+  summary            String
+  stepsToReproduce   Json
+  expectedResult     String
+  actualResult       String
+  severity           Severity
+  priority           Priority?
+  environmentSummary String?
+  assumptions        Json
+  confidenceScore    Float?
+  status             RecordStatus  @default(DRAFT)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  project            Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy          User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([status])
+}
+
+model TestCaseBatch {
+  id                 String         @id @default(uuid())
+  projectId          String
+  createdById        String
+  featureTitle       String
+  sourceRequirement  String
+  acceptanceCriteria String?
+  generationMode     GenerationMode
+  status             RecordStatus   @default(DRAFT)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  project            Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy          User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  testCases          TestCase[]
+
+  @@index([projectId])
+  @@index([createdById])
+}
+
+model TestCase {
+  id             String         @id @default(uuid())
+  batchId        String
+  projectId      String
+  title          String
+  preconditions  Json
+  steps          Json
+  expectedResult String
+  priority       Priority
+  caseType       CaseType
+  tags           Json?
+  status         RecordStatus   @default(DRAFT)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  batch          TestCaseBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([projectId])
+  @@index([caseType])
+  @@index([priority])
+}
+
+model GenerationLog {
+  id             String                @id @default(uuid())
+  userId         String
+  projectId      String?
+  featureType    GenerationFeatureType
+  model          String
+  inputSnapshot  Json
+  outputSnapshot Json?
+  inputTokens    Int?
+  outputTokens   Int?
+  status         GenerationStatus
+  errorMessage   String?
+  createdAt      DateTime              @default(now())
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([featureType])
+  @@index([status])
+}
+
+model UsageEvent {
+  id          String                @id @default(uuid())
+  userId      String
+  featureType GenerationFeatureType
+  creditsUsed Int                   @default(1)
+  createdAt   DateTime              @default(now())
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
