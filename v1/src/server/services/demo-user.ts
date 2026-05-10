@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
-const DEMO_USER_EMAIL = "demo@qa-copilot.local";
+const DEMO_USER_EMAIL = 'demo@qa-copilot.local';
 
 export async function getOrCreateDemoUser() {
   return prisma.user.upsert({
@@ -10,8 +10,8 @@ export async function getOrCreateDemoUser() {
     update: {},
     create: {
       email: DEMO_USER_EMAIL,
-      passwordHash: "demo-user-no-login",
-      name: "Demo QA User",
+      passwordHash: 'demo-user-no-login',
+      name: 'Demo QA User',
     },
   });
 }

@@ -4,8 +4,8 @@ import type {
   ProjectDto,
   SavedBugReportDto,
   SavedTestCaseBatchDto,
-} from "@/types/api";
-import type { BugReport, Project, TestCase, TestCaseBatch } from "@prisma/client";
+} from '@/types/api';
+import type { BugReport, Project, TestCase, TestCaseBatch } from '@prisma/client';
 
 type BugReportRecord = BugReport & {
   stepsToReproduce: string[];

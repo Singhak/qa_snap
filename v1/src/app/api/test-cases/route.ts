@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
-import { jsonError } from "@/lib/api/errors";
-import { prisma } from "@/lib/prisma";
-import { saveTestCaseBatchRequestSchema } from "@/lib/validators/test-case";
-import { getOrCreateDemoUser } from "@/server/services/demo-user";
-import { mapTestCaseBatch } from "@/server/services/mappers";
+import { jsonError } from '@/lib/api/errors';
+import { prisma } from '@/lib/prisma';
+import { saveTestCaseBatchRequestSchema } from '@/lib/validators/test-case';
+import { getOrCreateDemoUser } from '@/server/services/demo-user';
+import { mapTestCaseBatch } from '@/server/services/mappers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!project) {
-      return jsonError("PROJECT_NOT_FOUND", "Create or select a project before saving.", 404);
+      return jsonError('PROJECT_NOT_FOUND', 'Create or select a project before saving.', 404);
     }
 
     const batch = await prisma.testCaseBatch.create({
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         sourceRequirement: input.sourceRequirement,
         acceptanceCriteria: input.acceptanceCriteria,
         generationMode: input.generationMode,
-        status: "SAVED",
+        status: 'SAVED',
         testCases: {
           create: input.cases.map((testCase) => ({
             projectId: project.id,
@@ -43,14 +43,14 @@ export async function POST(request: NextRequest) {
             priority: testCase.priority,
             caseType: testCase.caseType,
             tags: testCase.tags,
-            status: "SAVED",
+            status: 'SAVED',
           })),
         },
       },
       include: {
         testCases: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
         },
       },
@@ -68,14 +68,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(mapTestCaseBatch(batch as never), { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return jsonError("INVALID_JSON", "Request body must be valid JSON.", 400);
+      return jsonError('INVALID_JSON', 'Request body must be valid JSON.', 400);
     }
 
     if (error instanceof ZodError) {
-      return jsonError("VALIDATION_ERROR", error.issues[0]?.message ?? "Invalid request.", 400);
+      return jsonError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Invalid request.', 400);
     }
 
-    const message = error instanceof Error ? error.message : "Unable to save test case batch.";
-    return jsonError("TEST_CASE_BATCH_SAVE_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to save test case batch.';
+    return jsonError('TEST_CASE_BATCH_SAVE_FAILED', message, 500);
   }
 }

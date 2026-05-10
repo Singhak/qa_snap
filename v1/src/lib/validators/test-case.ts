@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const prioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
-export const caseTypeSchema = z.enum(["POSITIVE", "NEGATIVE", "EDGE", "BOUNDARY"]);
-export const generationModeSchema = z.enum(["SMOKE", "REGRESSION", "EDGE_HEAVY"]);
+export const prioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']);
+export const caseTypeSchema = z.enum(['POSITIVE', 'NEGATIVE', 'EDGE', 'BOUNDARY']);
+export const generationModeSchema = z.enum(['SMOKE', 'REGRESSION', 'EDGE_HEAVY']);
 
 export const generatedTestCaseSchema = z.object({
   title: z.string().min(3),

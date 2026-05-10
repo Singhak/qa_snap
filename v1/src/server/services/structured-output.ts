@@ -1,8 +1,8 @@
-import { zodTextFormat } from "openai/helpers/zod";
-import { z, ZodTypeAny } from "zod";
+import { zodTextFormat } from 'openai/helpers/zod';
+import { z, ZodTypeAny } from 'zod';
 
-import { getServerEnv } from "@/lib/env";
-import { getOpenAIClient } from "@/lib/openai";
+import { getServerEnv } from '@/lib/env';
+import { getOpenAIClient } from '@/lib/openai';
 
 export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
   schema,
@@ -25,7 +25,7 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
     instructions,
     input: [
       {
-        role: "user",
+        role: 'user',
         content: prompt,
       },
     ],
@@ -40,12 +40,12 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
   }
 
   const refusal = response.output
-    .flatMap((item) => ("content" in item && Array.isArray(item.content) ? item.content : []))
-    .find((content) => content.type === "refusal");
+    .flatMap((item) => ('content' in item && Array.isArray(item.content) ? item.content : []))
+    .find((content) => content.type === 'refusal');
 
-  if (refusal && "refusal" in refusal) {
+  if (refusal && 'refusal' in refusal) {
     throw new Error(refusal.refusal);
   }
 
-  throw new Error("The model did not return structured output.");
+  throw new Error('The model did not return structured output.');
 }

@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "QA Copilot",
-  description: "Generate structured bug reports and QA test cases with OpenAI.",
+  title: 'QA Copilot',
+  description: 'Generate structured bug reports and QA test cases with OpenAI.',
 };
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from 'react';
 
 import type {
   CreateProjectRequest,
@@ -10,34 +10,34 @@ import type {
   ProjectDto,
   SavedBugReportDto,
   SavedTestCaseBatchDto,
-} from "@/types/api";
+} from '@/types/api';
 
 const defaultBugDraft = {
   rawInput:
-    "After resetting password, the login spinner keeps running in Chrome and the user never reaches the dashboard.",
-  expectedInput: "User should log in successfully after password reset.",
-  actualInput: "The login button shows a spinner forever and no redirect happens.",
-  environmentInput: "Chrome 124 on Windows 11, staging environment",
-  logsInput: "Console shows a 401 response from /api/session/refresh",
+    'After resetting password, the login spinner keeps running in Chrome and the user never reaches the dashboard.',
+  expectedInput: 'User should log in successfully after password reset.',
+  actualInput: 'The login button shows a spinner forever and no redirect happens.',
+  environmentInput: 'Chrome 124 on Windows 11, staging environment',
+  logsInput: 'Console shows a 401 response from /api/session/refresh',
 };
 
 const defaultTestCaseDraft = {
-  featureTitle: "Password Reset with OTP",
+  featureTitle: 'Password Reset with OTP',
   sourceRequirement:
-    "As a user, I want to reset my password using an OTP sent to my email so I can regain account access securely.",
+    'As a user, I want to reset my password using an OTP sent to my email so I can regain account access securely.',
   acceptanceCriteria:
-    "OTP expires in 5 minutes, users can resend OTP after 30 seconds, and password must meet complexity rules.",
-  generationMode: "REGRESSION",
+    'OTP expires in 5 minutes, users can resend OTP after 30 seconds, and password must meet complexity rules.',
+  generationMode: 'REGRESSION',
 };
 
 const defaultProjectDraft: CreateProjectRequest = {
-  name: "Checkout Revamp",
-  description: "QA workspace for exploratory bugs and regression coverage.",
+  name: 'Checkout Revamp',
+  description: 'QA workspace for exploratory bugs and regression coverage.',
 };
 
 export function QAPlayground() {
   const [projects, setProjects] = useState<ProjectDto[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [projectDetail, setProjectDetail] = useState<ProjectDetailDto | null>(null);
   const [projectDraft, setProjectDraft] = useState<CreateProjectRequest>(defaultProjectDraft);
   const [bugDraft, setBugDraft] = useState(defaultBugDraft);
@@ -73,13 +73,13 @@ export function QAPlayground() {
   }, [selectedProjectId]);
 
   async function refreshProjects(nextProjectId?: string) {
-    const response = await fetch("/api/projects", {
-      cache: "no-store",
+    const response = await fetch('/api/projects', {
+      cache: 'no-store',
     });
     const data = await response.json();
 
     if (!response.ok) {
-      setProjectError(data?.error?.message ?? "Unable to load projects.");
+      setProjectError(data?.error?.message ?? 'Unable to load projects.');
       return;
     }
 
@@ -90,7 +90,7 @@ export function QAPlayground() {
       nextProjectId ??
       (projectList.some((project) => project.id === selectedProjectId)
         ? selectedProjectId
-        : projectList[0]?.id ?? "");
+        : (projectList[0]?.id ?? ''));
 
     setSelectedProjectId(preferredProjectId);
     setProjectError(null);
@@ -98,12 +98,12 @@ export function QAPlayground() {
 
   async function refreshProjectDetail(projectId: string) {
     const response = await fetch(`/api/projects/${projectId}`, {
-      cache: "no-store",
+      cache: 'no-store',
     });
     const data = await response.json();
 
     if (!response.ok) {
-      setProjectError(data?.error?.message ?? "Unable to load project details.");
+      setProjectError(data?.error?.message ?? 'Unable to load project details.');
       return;
     }
 
@@ -116,17 +116,17 @@ export function QAPlayground() {
     setSaveMessage(null);
 
     startProjectTransition(async () => {
-      const response = await fetch("/api/projects", {
-        method: "POST",
+      const response = await fetch('/api/projects', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(projectDraft),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        setProjectError(data?.error?.message ?? "Unable to create project.");
+        setProjectError(data?.error?.message ?? 'Unable to create project.');
         return;
       }
 
@@ -139,7 +139,7 @@ export function QAPlayground() {
 
   async function submitBugReport() {
     if (!selectedProjectId) {
-      setBugError("Create or select a project before generating.");
+      setBugError('Create or select a project before generating.');
       return;
     }
 
@@ -147,10 +147,10 @@ export function QAPlayground() {
     setSaveMessage(null);
 
     startBugTransition(async () => {
-      const response = await fetch("/api/bug-reports/generate", {
-        method: "POST",
+      const response = await fetch('/api/bug-reports/generate', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...bugDraft,
@@ -162,7 +162,7 @@ export function QAPlayground() {
 
       if (!response.ok) {
         setBugOutput(null);
-        setBugError(data?.error?.message ?? "Bug report generation failed.");
+        setBugError(data?.error?.message ?? 'Bug report generation failed.');
         return;
       }
 
@@ -172,7 +172,7 @@ export function QAPlayground() {
 
   async function saveBugReport() {
     if (!selectedProjectId || !bugOutput) {
-      setBugError("Generate a bug report before saving.");
+      setBugError('Generate a bug report before saving.');
       return;
     }
 
@@ -180,10 +180,10 @@ export function QAPlayground() {
     setSaveMessage(null);
 
     startSaveBugTransition(async () => {
-      const response = await fetch("/api/bug-reports", {
-        method: "POST",
+      const response = await fetch('/api/bug-reports', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...bugDraft,
@@ -194,7 +194,7 @@ export function QAPlayground() {
       const data = await response.json();
 
       if (!response.ok) {
-        setBugError(data?.error?.message ?? "Unable to save bug report.");
+        setBugError(data?.error?.message ?? 'Unable to save bug report.');
         return;
       }
 
@@ -205,7 +205,7 @@ export function QAPlayground() {
 
   async function submitTestCases() {
     if (!selectedProjectId) {
-      setTestError("Create or select a project before generating.");
+      setTestError('Create or select a project before generating.');
       return;
     }
 
@@ -213,10 +213,10 @@ export function QAPlayground() {
     setSaveMessage(null);
 
     startTestTransition(async () => {
-      const response = await fetch("/api/test-cases/generate", {
-        method: "POST",
+      const response = await fetch('/api/test-cases/generate', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...testCaseDraft,
@@ -228,7 +228,7 @@ export function QAPlayground() {
 
       if (!response.ok) {
         setTestOutput(null);
-        setTestError(data?.error?.message ?? "Test case generation failed.");
+        setTestError(data?.error?.message ?? 'Test case generation failed.');
         return;
       }
 
@@ -238,7 +238,7 @@ export function QAPlayground() {
 
   async function saveTestCases() {
     if (!selectedProjectId || !testOutput) {
-      setTestError("Generate test cases before saving.");
+      setTestError('Generate test cases before saving.');
       return;
     }
 
@@ -246,10 +246,10 @@ export function QAPlayground() {
     setSaveMessage(null);
 
     startSaveCasesTransition(async () => {
-      const response = await fetch("/api/test-cases", {
-        method: "POST",
+      const response = await fetch('/api/test-cases', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...testCaseDraft,
@@ -260,13 +260,13 @@ export function QAPlayground() {
       const data = await response.json();
 
       if (!response.ok) {
-        setTestError(data?.error?.message ?? "Unable to save test cases.");
+        setTestError(data?.error?.message ?? 'Unable to save test cases.');
         return;
       }
 
       await refreshProjectDetail(selectedProjectId);
       setSaveMessage(
-        `Saved ${(data as SavedTestCaseBatchDto).cases.length} test cases for "${(data as SavedTestCaseBatchDto).featureTitle}".`,
+        `Saved ${(data as SavedTestCaseBatchDto).cases.length} test cases for "${(data as SavedTestCaseBatchDto).featureTitle}".`
       );
     });
   }
@@ -282,8 +282,8 @@ export function QAPlayground() {
           </div>
           <h1>QA writing, without the repetitive drag.</h1>
           <p>
-            Create a project, generate structured QA assets, and save bug reports
-            plus test-case batches into the database from one working surface.
+            Create a project, generate structured QA assets, and save bug reports plus test-case
+            batches into the database from one working surface.
           </p>
         </div>
 
@@ -324,10 +324,12 @@ export function QAPlayground() {
                 onClick={createProject}
                 disabled={isProjectPending}
               >
-                {isProjectPending ? "Creating..." : "Create Project"}
+                {isProjectPending ? 'Creating...' : 'Create Project'}
               </button>
               <span className="meta">
-                {isBootstrapping ? "Refreshing workspace..." : `${projects.length} project(s) loaded`}
+                {isBootstrapping
+                  ? 'Refreshing workspace...'
+                  : `${projects.length} project(s) loaded`}
               </span>
             </div>
             {projectError ? <p className="meta error-text">{projectError}</p> : null}
@@ -335,11 +337,9 @@ export function QAPlayground() {
             {projectDetail ? (
               <div className="output-card">
                 <h3>{projectDetail.name}</h3>
+                <p className="meta">{projectDetail.description || 'No description yet.'}</p>
                 <p className="meta">
-                  {projectDetail.description || "No description yet."}
-                </p>
-                <p className="meta">
-                  {projectDetail.bugReports.length} saved bug report(s) and{" "}
+                  {projectDetail.bugReports.length} saved bug report(s) and{' '}
                   {projectDetail.testCaseBatches.length} saved batch(es)
                 </p>
               </div>
@@ -363,9 +363,7 @@ export function QAPlayground() {
             <Field
               label="Expected behavior"
               value={bugDraft.expectedInput}
-              onChange={(value) =>
-                setBugDraft((current) => ({ ...current, expectedInput: value }))
-              }
+              onChange={(value) => setBugDraft((current) => ({ ...current, expectedInput: value }))}
             />
             <Field
               label="Actual behavior"
@@ -391,7 +389,7 @@ export function QAPlayground() {
                 onClick={submitBugReport}
                 disabled={isBugPending}
               >
-                {isBugPending ? "Generating..." : "Generate Bug Report"}
+                {isBugPending ? 'Generating...' : 'Generate Bug Report'}
               </button>
               <button
                 className="button secondary"
@@ -399,7 +397,7 @@ export function QAPlayground() {
                 onClick={saveBugReport}
                 disabled={isSavingBug || !bugOutput}
               >
-                {isSavingBug ? "Saving..." : "Save Bug Report"}
+                {isSavingBug ? 'Saving...' : 'Save Bug Report'}
               </button>
             </div>
             {bugError ? <p className="meta error-text">{bugError}</p> : null}
@@ -463,7 +461,7 @@ export function QAPlayground() {
                 onClick={submitTestCases}
                 disabled={isTestPending}
               >
-                {isTestPending ? "Generating..." : "Generate Test Cases"}
+                {isTestPending ? 'Generating...' : 'Generate Test Cases'}
               </button>
               <button
                 className="button secondary"
@@ -471,7 +469,7 @@ export function QAPlayground() {
                 onClick={saveTestCases}
                 disabled={isSavingCases || !testOutput}
               >
-                {isSavingCases ? "Saving..." : "Save Test Cases"}
+                {isSavingCases ? 'Saving...' : 'Save Test Cases'}
               </button>
             </div>
             {testError ? <p className="meta error-text">{testError}</p> : null}
@@ -515,7 +513,7 @@ export function QAPlayground() {
                 <div key={batch.id} className="output-card">
                   <h3>{batch.featureTitle}</h3>
                   <p className="meta">
-                    {batch.cases.length} case(s) | {batch.generationMode} |{" "}
+                    {batch.cases.length} case(s) | {batch.generationMode} |{' '}
                     {new Date(batch.createdAt).toLocaleString()}
                   </p>
                   <pre>{JSON.stringify(batch.cases.slice(0, 2), null, 2)}</pre>
@@ -540,12 +538,12 @@ function Field({
   value?: string;
   onChange: (value: string) => void;
 }) {
-  const id = label.toLowerCase().replace(/\s+/g, "-");
+  const id = label.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <input id={id} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      <input id={id} value={value ?? ''} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }
@@ -559,12 +557,12 @@ function TextAreaField({
   value?: string;
   onChange: (value: string) => void;
 }) {
-  const id = label.toLowerCase().replace(/\s+/g, "-");
+  const id = label.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <textarea id={id} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      <textarea id={id} value={value ?? ''} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }

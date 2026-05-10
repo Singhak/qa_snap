@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const severitySchema = z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
-export const prioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
+export const severitySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export const prioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']);
 
 export const generateBugReportRequestSchema = z.object({
   projectId: z.string().uuid(),
@@ -26,7 +26,7 @@ export const generateBugReportResponseSchema = z.object({
 });
 
 export const saveBugReportRequestSchema = generateBugReportRequestSchema.merge(
-  generateBugReportResponseSchema,
+  generateBugReportResponseSchema
 );
 
 export type GenerateBugReportRequestInput = z.input<typeof generateBugReportRequestSchema>;

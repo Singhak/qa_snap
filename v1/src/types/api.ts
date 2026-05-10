@@ -1,7 +1,7 @@
-export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-export type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-export type CaseType = "POSITIVE" | "NEGATIVE" | "EDGE" | "BOUNDARY";
-export type GenerationMode = "SMOKE" | "REGRESSION" | "EDGE_HEAVY";
+export type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type CaseType = 'POSITIVE' | 'NEGATIVE' | 'EDGE' | 'BOUNDARY';
+export type GenerationMode = 'SMOKE' | 'REGRESSION' | 'EDGE_HEAVY';
 
 export interface GenerateBugReportRequest {
   projectId: string;

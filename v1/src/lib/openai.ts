@@ -1,6 +1,6 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
-import { getServerEnv } from "@/lib/env";
+import { getServerEnv } from '@/lib/env';
 
 let client: OpenAI | null = null;
 
