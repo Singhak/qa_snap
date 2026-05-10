@@ -1,18 +1,26 @@
 import OpenAI from "openai";
 
-import { getServerEnv } from "@/lib/env";
+import { getProviderApiKey } from "@/lib/env";
+import type { AIProvider } from "@/types/api";
 
-let client: OpenAI | null = null;
+const clients = new Map<string, OpenAI>();
 
-export function getOpenAIClient() {
-  if (client) {
-    return client;
+export function getOpenAIClient(provider: Extract<AIProvider, "OPENAI" | "OPENROUTER"> = "OPENAI") {
+  if (clients.has(provider)) {
+    return clients.get(provider)!;
   }
 
-  const env = getServerEnv();
-  client = new OpenAI({
-    apiKey: env.OPENAI_API_KEY,
+  const apiKey = getProviderApiKey(provider);
+
+  if (!apiKey) {
+    throw new Error(`${provider} is not configured in the current environment.`);
+  }
+
+  const client = new OpenAI({
+    apiKey,
+    baseURL: provider === "OPENROUTER" ? "https://openrouter.ai/api/v1" : undefined,
   });
 
+  clients.set(provider, client);
   return client;
 }
