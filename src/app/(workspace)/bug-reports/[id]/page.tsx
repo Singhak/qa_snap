@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { BugReportDetailView } from "@/components/record-details";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateDemoUser } from "@/server/services/demo-user";
+import { getCurrentUser } from "@/server/auth/current-user";
 import { mapBugReport } from "@/server/services/mappers";
 
 export default async function BugReportDetailPage({
@@ -11,7 +11,11 @@ export default async function BugReportDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await getOrCreateDemoUser();
+  const user = await getCurrentUser();
+
+  if (!user) {
+    notFound();
+  }
 
   const report = await prisma.bugReport.findFirst({
     where: {

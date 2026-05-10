@@ -1,4 +1,4 @@
-import { DashboardPage } from "@/components/workspace";
+import { DashboardPage } from "@/components/workspace-pages";
 
 export default function DashboardRoute() {
   return <DashboardPage />;
