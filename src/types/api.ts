@@ -2,6 +2,24 @@ export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 export type CaseType = "POSITIVE" | "NEGATIVE" | "EDGE" | "BOUNDARY";
 export type GenerationMode = "SMOKE" | "REGRESSION" | "EDGE_HEAVY";
+export type AIProvider = "OPENAI" | "OPENROUTER" | "GEMINI" | "ANTHROPIC";
+
+export interface AIProviderOption {
+  id: AIProvider;
+  label: string;
+  model: string;
+  supportsVision: boolean;
+}
+export type TestCaseAttachmentKind = "TEXT" | "IMAGE";
+
+export interface TestCaseSourceAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  kind: TestCaseAttachmentKind;
+  textContent?: string;
+  imageDataUrl?: string;
+}
 
 export interface GenerateBugReportRequest {
   projectId: string;
@@ -10,6 +28,7 @@ export interface GenerateBugReportRequest {
   actualInput?: string;
   environmentInput?: string;
   logsInput?: string;
+  provider?: AIProvider;
 }
 
 export interface GenerateBugReportResponse {
@@ -32,7 +51,10 @@ export interface GenerateTestCasesRequest {
   featureTitle: string;
   sourceRequirement: string;
   acceptanceCriteria?: string;
+  contextNotes?: string;
   generationMode: GenerationMode;
+  attachments?: TestCaseSourceAttachment[];
+  provider?: AIProvider;
 }
 
 export interface GeneratedTestCase {
@@ -51,6 +73,18 @@ export interface GenerateTestCasesResponse {
 
 export interface SaveTestCaseBatchRequest extends GenerateTestCasesRequest {
   cases: GeneratedTestCase[];
+}
+
+export interface UserSettingsDto {
+  id: string;
+  name?: string | null;
+  email: string;
+  preferredProvider?: AIProvider | null;
+}
+
+export interface UpdateUserSettingsRequest {
+  name?: string;
+  preferredProvider?: AIProvider | "";
 }
 
 export interface CreateProjectRequest {
@@ -89,6 +123,9 @@ export interface SavedTestCaseBatchDto {
   featureTitle: string;
   sourceRequirement: string;
   acceptanceCriteria?: string | null;
+  contextNotes?: string | null;
+  sourceMaterials?: TestCaseSourceAttachment[];
+  provider?: AIProvider | null;
   generationMode: GenerationMode;
   createdAt: string;
   updatedAt: string;
@@ -104,5 +141,6 @@ export interface ApiErrorResponse {
   error: {
     code: string;
     message: string;
+    requestId?: string;
   };
 }
