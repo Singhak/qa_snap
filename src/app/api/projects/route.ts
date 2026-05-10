@@ -4,12 +4,16 @@ import { ZodError } from "zod";
 import { jsonError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { createProjectRequestSchema } from "@/lib/validators/project";
-import { getOrCreateDemoUser } from "@/server/services/demo-user";
+import { getCurrentUser } from "@/server/auth/current-user";
 import { mapProject } from "@/server/services/mappers";
 
 export async function GET() {
   try {
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to view projects.", 401);
+    }
     const projects = await prisma.project.findMany({
       where: {
         userId: user.id,
@@ -30,7 +34,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = createProjectRequestSchema.parse(body);
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to create a project.", 401);
+    }
 
     const project = await prisma.project.create({
       data: {

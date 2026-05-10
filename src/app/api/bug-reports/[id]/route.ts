@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { jsonError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { saveBugReportRequestSchema } from "@/lib/validators/bug-report";
-import { getOrCreateDemoUser } from "@/server/services/demo-user";
+import { getCurrentUser } from "@/server/auth/current-user";
 import { mapBugReport } from "@/server/services/mappers";
 
 export async function GET(
@@ -13,7 +13,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to view bug reports.", 401);
+    }
 
     const bugReport = await prisma.bugReport.findFirst({
       where: {
@@ -43,7 +47,11 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const input = saveBugReportRequestSchema.parse(body);
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to update bug reports.", 401);
+    }
 
     const existing = await prisma.bugReport.findFirst({
       where: {

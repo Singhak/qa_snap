@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
 import { jsonError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { saveTestCaseBatchRequestSchema } from "@/lib/validators/test-case";
-import { getOrCreateDemoUser } from "@/server/services/demo-user";
+import { getCurrentUser } from "@/server/auth/current-user";
 import { mapTestCaseBatch } from "@/server/services/mappers";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = saveTestCaseBatchRequestSchema.parse(body);
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to save test case batches.", 401);
+    }
 
     const project = await prisma.project.findFirst({
       where: {
@@ -24,29 +29,46 @@ export async function POST(request: NextRequest) {
       return jsonError("PROJECT_NOT_FOUND", "Create or select a project before saving.", 404);
     }
 
-    const batch = await prisma.testCaseBatch.create({
-      data: {
-        projectId: project.id,
-        createdById: user.id,
-        featureTitle: input.featureTitle,
-        sourceRequirement: input.sourceRequirement,
-        acceptanceCriteria: input.acceptanceCriteria,
-        generationMode: input.generationMode,
-        status: "SAVED",
-        testCases: {
-          create: input.cases.map((testCase) => ({
-            projectId: project.id,
-            title: testCase.title,
-            preconditions: testCase.preconditions,
-            steps: testCase.steps,
-            expectedResult: testCase.expectedResult,
-            priority: testCase.priority,
-            caseType: testCase.caseType,
-            tags: testCase.tags,
-            status: "SAVED",
-          })),
+    const createData: Prisma.TestCaseBatchCreateInput = {
+      project: {
+        connect: {
+          id: project.id,
         },
       },
+      createdBy: {
+        connect: {
+          id: user.id,
+        },
+      },
+      featureTitle: input.featureTitle,
+      sourceRequirement: input.sourceRequirement,
+      acceptanceCriteria: input.acceptanceCriteria,
+      contextNotes: input.contextNotes,
+      sourceMaterials: input.attachments ? (input.attachments as Prisma.InputJsonValue) : Prisma.JsonNull,
+      provider: input.provider,
+      generationMode: input.generationMode,
+      status: "SAVED",
+      testCases: {
+        create: input.cases.map((testCase) => ({
+          project: {
+            connect: {
+              id: project.id,
+            },
+          },
+          title: testCase.title,
+          preconditions: testCase.preconditions as Prisma.InputJsonValue,
+          steps: testCase.steps as Prisma.InputJsonValue,
+          expectedResult: testCase.expectedResult,
+          priority: testCase.priority,
+          caseType: testCase.caseType,
+          tags: testCase.tags ? (testCase.tags as Prisma.InputJsonValue) : Prisma.JsonNull,
+          status: "SAVED",
+        })),
+      },
+    };
+
+    const batch = await prisma.testCaseBatch.create({
+      data: createData,
       include: {
         testCases: {
           orderBy: {
@@ -65,7 +87,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(mapTestCaseBatch(batch as never), { status: 201 });
+    return NextResponse.json(mapTestCaseBatch(batch), { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return jsonError("INVALID_JSON", "Request body must be valid JSON.", 400);

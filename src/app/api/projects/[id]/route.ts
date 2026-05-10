@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { jsonError } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 import { updateProjectRequestSchema } from "@/lib/validators/project";
-import { getOrCreateDemoUser } from "@/server/services/demo-user";
+import { getCurrentUser } from "@/server/auth/current-user";
 import { mapProjectDetail, mapProject } from "@/server/services/mappers";
 
 export async function GET(
@@ -13,7 +13,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to view this project.", 401);
+    }
 
     const project = await prisma.project.findFirst({
       where: {
@@ -67,7 +71,11 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const input = updateProjectRequestSchema.parse(body);
-    const user = await getOrCreateDemoUser();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonError("UNAUTHORIZED", "You must sign in to update this project.", 401);
+    }
 
     const existingProject = await prisma.project.findFirst({
       where: {
