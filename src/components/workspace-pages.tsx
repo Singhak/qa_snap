@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
 
-import { BugReportExportActions } from "@/components/bug-report-export-actions";
-import { TestCaseExportActions } from "@/components/test-case-export-actions";
-import type { TestCaseDraft } from "@/components/workspace-model";
+import { BugReportExportActions } from '@/components/bug-report-export-actions';
+import { TestCaseExportActions } from '@/components/test-case-export-actions';
+import type { TestCaseDraft } from '@/components/workspace-model';
 import {
   ActiveWorkspacePanel,
   BugReportCard,
@@ -19,8 +19,8 @@ import {
   TestCaseBatchCard,
   TextAreaField,
   useWorkspace,
-} from "@/components/workspace";
-import type { AIProvider, GenerateBugReportResponse, SavedTestCaseBatchDto } from "@/types/api";
+} from '@/components/workspace';
+import type { AIProvider, GenerateBugReportResponse, SavedTestCaseBatchDto } from '@/types/api';
 
 export function DashboardPage() {
   const { projectDetail } = useWorkspace();
@@ -87,8 +87,13 @@ export function ProjectsPage() {
             onChange={(value) => setProjectDraft((current) => ({ ...current, description: value }))}
           />
           <div className="button-row">
-            <button className="button" type="button" onClick={createProject} disabled={isProjectPending}>
-              {isProjectPending ? "Creating..." : "Create Project"}
+            <button
+              className="button"
+              type="button"
+              onClick={createProject}
+              disabled={isProjectPending}
+            >
+              {isProjectPending ? 'Creating...' : 'Create Project'}
             </button>
             <span className="meta">{projects.length} project(s) available</span>
           </div>
@@ -98,10 +103,13 @@ export function ProjectsPage() {
       </section>
 
       <section className="panel">
-        <SectionHeader eyebrow="Selected Project" title={projectDetail?.name ?? "No project selected"} />
+        <SectionHeader
+          eyebrow="Selected Project"
+          title={projectDetail?.name ?? 'No project selected'}
+        />
         <p className="panel-lead">
           {projectDetail?.description ??
-            "Pick a project from the sidebar to review its saved bug reports and test-case batches."}
+            'Pick a project from the sidebar to review its saved bug reports and test-case batches.'}
         </p>
         <div className="overview-grid">
           <SummaryTile
@@ -117,7 +125,8 @@ export function ProjectsPage() {
           <SummaryTile
             label="Coverage volume"
             value={String(
-              projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ?? 0,
+              projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ??
+                0
             )}
             helper="Total generated cases in this workspace"
           />
@@ -146,15 +155,17 @@ export function BugReportsPage() {
     saveBugReport,
     projectDetail,
   } = useWorkspace();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [severityFilter, setSeverityFilter] = useState<"ALL" | GenerateBugReportResponse["severity"]>("ALL");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [severityFilter, setSeverityFilter] = useState<
+    'ALL' | GenerateBugReportResponse['severity']
+  >('ALL');
 
   const filteredBugReports = useMemo(() => {
     const reports = projectDetail?.bugReports ?? [];
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return reports.filter((report) => {
-      const matchesSeverity = severityFilter === "ALL" || report.severity === severityFilter;
+      const matchesSeverity = severityFilter === 'ALL' || report.severity === severityFilter;
       const matchesQuery =
         !normalizedQuery ||
         report.title.toLowerCase().includes(normalizedQuery) ||
@@ -191,7 +202,9 @@ export function BugReportsPage() {
             <Field
               label="Environment"
               value={bugDraft.environmentInput}
-              onChange={(value) => setBugDraft((current) => ({ ...current, environmentInput: value }))}
+              onChange={(value) =>
+                setBugDraft((current) => ({ ...current, environmentInput: value }))
+              }
             />
             <TextAreaField
               label="Logs or console output"
@@ -205,7 +218,7 @@ export function BugReportsPage() {
                 onClick={submitBugReport}
                 disabled={isBugPending || !selectedProvider}
               >
-                {isBugPending ? "Generating..." : "Generate Bug Report"}
+                {isBugPending ? 'Generating...' : 'Generate Bug Report'}
               </button>
               <button
                 className="button ghost"
@@ -213,7 +226,7 @@ export function BugReportsPage() {
                 onClick={regenerateBugReport}
                 disabled={isBugPending || !selectedProvider}
               >
-                {isBugPending ? "Refreshing..." : "Regenerate"}
+                {isBugPending ? 'Refreshing...' : 'Regenerate'}
               </button>
               <button
                 className="button ghost"
@@ -229,18 +242,22 @@ export function BugReportsPage() {
                 onClick={saveBugReport}
                 disabled={isSavingBug || !bugOutput}
               >
-                {isSavingBug ? "Saving..." : editingBugReportId ? "Update Bug Report" : "Save Bug Report"}
+                {isSavingBug
+                  ? 'Saving...'
+                  : editingBugReportId
+                    ? 'Update Bug Report'
+                    : 'Save Bug Report'}
               </button>
             </div>
             {bugOutput ? (
-              <p className={`meta ${bugDraftDirty ? "warning-text" : "success-text"}`}>
+              <p className={`meta ${bugDraftDirty ? 'warning-text' : 'success-text'}`}>
                 {editingBugReportId
                   ? bugDraftDirty
-                    ? "Editing a saved bug report with unsaved changes."
-                    : "Loaded saved bug report is in sync."
+                    ? 'Editing a saved bug report with unsaved changes.'
+                    : 'Loaded saved bug report is in sync.'
                   : bugDraftDirty
-                    ? "Unsaved edits in current bug report draft."
-                    : "Draft matches last AI generation."}
+                    ? 'Unsaved edits in current bug report draft.'
+                    : 'Draft matches last AI generation.'}
               </p>
             ) : null}
             {!selectedProvider ? (
@@ -269,7 +286,7 @@ export function BugReportsPage() {
                   stepsToReproduce: bugOutput.stepsToReproduce,
                   assumptions: bugOutput.assumptions,
                 }}
-                fileStem={`${bugOutput.title || "bug-report"}-draft`}
+                fileStem={`${bugOutput.title || 'bug-report'}-draft`}
               />
               <EditableBugReport report={bugOutput} onChange={setBugOutput} />
             </div>
@@ -297,7 +314,9 @@ export function BugReportsPage() {
               id="bug-severity-filter"
               value={severityFilter}
               onChange={(event) =>
-                setSeverityFilter(event.target.value as "ALL" | GenerateBugReportResponse["severity"])
+                setSeverityFilter(
+                  event.target.value as 'ALL' | GenerateBugReportResponse['severity']
+                )
               }
             >
               <option value="ALL">All severities</option>
@@ -311,7 +330,11 @@ export function BugReportsPage() {
         {filteredBugReports.length ? (
           <div className="stack">
             {filteredBugReports.map((report) => (
-              <BugReportCard key={report.id} report={report} onEdit={() => loadSavedBugReport(report)} />
+              <BugReportCard
+                key={report.id}
+                report={report}
+                onEdit={() => loadSavedBugReport(report)}
+              />
             ))}
           </div>
         ) : projectDetail?.bugReports.length ? (
@@ -343,8 +366,10 @@ export function TestCasesPage() {
     saveTestCases,
     projectDetail,
   } = useWorkspace();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [modeFilter, setModeFilter] = useState<"ALL" | SavedTestCaseBatchDto["generationMode"]>("ALL");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [modeFilter, setModeFilter] = useState<'ALL' | SavedTestCaseBatchDto['generationMode']>(
+    'ALL'
+  );
   const [materialError, setMaterialError] = useState<string | null>(null);
   const [isMaterialPending, setIsMaterialPending] = useState(false);
 
@@ -353,7 +378,7 @@ export function TestCasesPage() {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return batches.filter((batch) => {
-      const matchesMode = modeFilter === "ALL" || batch.generationMode === modeFilter;
+      const matchesMode = modeFilter === 'ALL' || batch.generationMode === modeFilter;
       const matchesQuery =
         !normalizedQuery ||
         batch.featureTitle.toLowerCase().includes(normalizedQuery) ||
@@ -361,7 +386,7 @@ export function TestCasesPage() {
         batch.cases.some(
           (testCase) =>
             testCase.title.toLowerCase().includes(normalizedQuery) ||
-            testCase.expectedResult.toLowerCase().includes(normalizedQuery),
+            testCase.expectedResult.toLowerCase().includes(normalizedQuery)
         );
 
       return matchesMode && matchesQuery;
@@ -386,10 +411,12 @@ export function TestCasesPage() {
         attachments: [...current.attachments, ...nextAttachments].slice(0, 6),
       }));
     } catch (error) {
-      setMaterialError(error instanceof Error ? error.message : "Unable to read one or more files.");
+      setMaterialError(
+        error instanceof Error ? error.message : 'Unable to read one or more files.'
+      );
     } finally {
       setIsMaterialPending(false);
-      event.target.value = "";
+      event.target.value = '';
     }
   }
 
@@ -410,22 +437,30 @@ export function TestCasesPage() {
             <Field
               label="Feature title"
               value={testCaseDraft.featureTitle}
-              onChange={(value) => setTestCaseDraft((current) => ({ ...current, featureTitle: value }))}
+              onChange={(value) =>
+                setTestCaseDraft((current) => ({ ...current, featureTitle: value }))
+              }
             />
             <TextAreaField
               label="Requirement"
               value={testCaseDraft.sourceRequirement}
-              onChange={(value) => setTestCaseDraft((current) => ({ ...current, sourceRequirement: value }))}
+              onChange={(value) =>
+                setTestCaseDraft((current) => ({ ...current, sourceRequirement: value }))
+              }
             />
             <TextAreaField
               label="Acceptance criteria"
               value={testCaseDraft.acceptanceCriteria}
-              onChange={(value) => setTestCaseDraft((current) => ({ ...current, acceptanceCriteria: value }))}
+              onChange={(value) =>
+                setTestCaseDraft((current) => ({ ...current, acceptanceCriteria: value }))
+              }
             />
             <TextAreaField
               label="QA context notes"
               value={testCaseDraft.contextNotes}
-              onChange={(value) => setTestCaseDraft((current) => ({ ...current, contextNotes: value }))}
+              onChange={(value) =>
+                setTestCaseDraft((current) => ({ ...current, contextNotes: value }))
+              }
             />
             <div className="field">
               <label htmlFor="source-materials">Source material uploads</label>
@@ -437,15 +472,20 @@ export function TestCasesPage() {
                 onChange={handleMaterialUpload}
               />
               <p className="meta">
-                Add design screenshots or text-based requirement docs. Supported today: PNG, JPG, WEBP, GIF,
-                TXT, MD, CSV, JSON, HTML, XML, LOG, and RTF.
+                Add design screenshots or text-based requirement docs. Supported today: PNG, JPG,
+                WEBP, GIF, TXT, MD, CSV, JSON, HTML, XML, LOG, and RTF.
               </p>
               <p className="meta">
-                {isMaterialPending ? "Reading uploaded material..." : "Up to 6 reference files per generation."}
+                {isMaterialPending
+                  ? 'Reading uploaded material...'
+                  : 'Up to 6 reference files per generation.'}
               </p>
             </div>
             {testCaseDraft.attachments.length ? (
-              <SourceMaterialList attachments={testCaseDraft.attachments} onRemove={removeMaterial} />
+              <SourceMaterialList
+                attachments={testCaseDraft.attachments}
+                onRemove={removeMaterial}
+              />
             ) : null}
             <div className="field">
               <label htmlFor="generationMode">Generation mode</label>
@@ -455,7 +495,7 @@ export function TestCasesPage() {
                 onChange={(event) =>
                   setTestCaseDraft((current) => ({
                     ...current,
-                    generationMode: event.target.value as TestCaseDraft["generationMode"],
+                    generationMode: event.target.value as TestCaseDraft['generationMode'],
                   }))
                 }
               >
@@ -471,7 +511,7 @@ export function TestCasesPage() {
                 onClick={submitTestCases}
                 disabled={isTestPending || !selectedProvider}
               >
-                {isTestPending ? "Generating..." : "Generate Test Cases"}
+                {isTestPending ? 'Generating...' : 'Generate Test Cases'}
               </button>
               <button
                 className="button ghost"
@@ -479,7 +519,7 @@ export function TestCasesPage() {
                 onClick={regenerateTestCases}
                 disabled={isTestPending || !selectedProvider}
               >
-                {isTestPending ? "Refreshing..." : "Regenerate"}
+                {isTestPending ? 'Refreshing...' : 'Regenerate'}
               </button>
               <button
                 className="button ghost"
@@ -495,18 +535,22 @@ export function TestCasesPage() {
                 onClick={saveTestCases}
                 disabled={isSavingCases || !testOutput}
               >
-                {isSavingCases ? "Saving..." : editingTestCaseBatchId ? "Update Test Cases" : "Save Test Cases"}
+                {isSavingCases
+                  ? 'Saving...'
+                  : editingTestCaseBatchId
+                    ? 'Update Test Cases'
+                    : 'Save Test Cases'}
               </button>
             </div>
             {testOutput ? (
-              <p className={`meta ${testDraftDirty ? "warning-text" : "success-text"}`}>
+              <p className={`meta ${testDraftDirty ? 'warning-text' : 'success-text'}`}>
                 {editingTestCaseBatchId
                   ? testDraftDirty
-                    ? "Editing a saved test case batch with unsaved changes."
-                    : "Loaded saved test case batch is in sync."
+                    ? 'Editing a saved test case batch with unsaved changes.'
+                    : 'Loaded saved test case batch is in sync.'
                   : testDraftDirty
-                    ? "Unsaved edits in current test case draft."
-                    : "Draft matches last AI generation."}
+                    ? 'Unsaved edits in current test case draft.'
+                    : 'Draft matches last AI generation.'}
               </p>
             ) : null}
             {!selectedProvider ? (
@@ -531,7 +575,7 @@ export function TestCasesPage() {
                   generationMode: testCaseDraft.generationMode,
                   cases: testOutput.cases,
                 }}
-                fileStem={`${testCaseDraft.featureTitle || "generated"}-draft`}
+                fileStem={`${testCaseDraft.featureTitle || 'generated'}-draft`}
               />
               <EditableTestCases output={testOutput} onChange={setTestOutput} />
             </div>
@@ -558,7 +602,9 @@ export function TestCasesPage() {
             <select
               id="test-case-mode-filter"
               value={modeFilter}
-              onChange={(event) => setModeFilter(event.target.value as "ALL" | SavedTestCaseBatchDto["generationMode"])}
+              onChange={(event) =>
+                setModeFilter(event.target.value as 'ALL' | SavedTestCaseBatchDto['generationMode'])
+              }
             >
               <option value="ALL">All modes</option>
               <option value="SMOKE">SMOKE</option>
@@ -570,7 +616,11 @@ export function TestCasesPage() {
         {filteredBatches.length ? (
           <div className="stack">
             {filteredBatches.map((batch) => (
-              <TestCaseBatchCard key={batch.id} batch={batch} onEdit={() => loadSavedTestCaseBatch(batch)} />
+              <TestCaseBatchCard
+                key={batch.id}
+                batch={batch}
+                onEdit={() => loadSavedTestCaseBatch(batch)}
+              />
             ))}
           </div>
         ) : projectDetail?.testCaseBatches.length ? (
@@ -601,10 +651,11 @@ export function SettingsPage() {
             <p className="eyebrow">Settings</p>
             <h2>Account and AI defaults</h2>
           </div>
-          <span className="meta-chip">{userSettings?.email ?? "Workspace account"}</span>
+          <span className="meta-chip">{userSettings?.email ?? 'Workspace account'}</span>
         </div>
         <p className="panel-lead">
-          Set a friendly display name and choose the provider that should be selected by default whenever you open the workspace.
+          Set a friendly display name and choose the provider that should be selected by default
+          whenever you open the workspace.
         </p>
       </section>
 
@@ -617,7 +668,12 @@ export function SettingsPage() {
               value={settingsDraft.name}
               onChange={(value) => setSettingsDraft((current) => ({ ...current, name: value }))}
             />
-            <Field label="Email" value={userSettings?.email ?? ""} onChange={() => undefined} readOnly />
+            <Field
+              label="Email"
+              value={userSettings?.email ?? ''}
+              onChange={() => undefined}
+              readOnly
+            />
             <p className="meta">Email is currently read-only in this beta build.</p>
           </div>
         </section>
@@ -633,7 +689,7 @@ export function SettingsPage() {
                 onChange={(event) =>
                   setSettingsDraft((current) => ({
                     ...current,
-                    preferredProvider: event.target.value as AIProvider | "",
+                    preferredProvider: event.target.value as AIProvider | '',
                   }))
                 }
               >
@@ -646,11 +702,17 @@ export function SettingsPage() {
               </select>
             </div>
             <p className="meta">
-              This only chooses the default selection. You can still switch providers anytime from the top bar.
+              This only chooses the default selection. You can still switch providers anytime from
+              the top bar.
             </p>
             <div className="button-row">
-              <button className="button" type="button" onClick={saveSettings} disabled={isSavingSettings}>
-                {isSavingSettings ? "Saving..." : "Save Settings"}
+              <button
+                className="button"
+                type="button"
+                onClick={saveSettings}
+                disabled={isSavingSettings}
+              >
+                {isSavingSettings ? 'Saving...' : 'Save Settings'}
               </button>
             </div>
           </div>

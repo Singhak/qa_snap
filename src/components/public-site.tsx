@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 type PublicSiteShellProps = {
   children: ReactNode;
@@ -74,8 +74,8 @@ export function LandingHero() {
         </div>
         <h1>Convert messy QA inputs into launch-ready testing assets.</h1>
         <p>
-          QA Copilot helps testers upload notes, designs, and requirement docs, then turns them
-          into structured bug reports and high-coverage test cases they can edit, save, and export.
+          QA Copilot helps testers upload notes, designs, and requirement docs, then turns them into
+          structured bug reports and high-coverage test cases they can edit, save, and export.
         </p>
         <div className="button-row">
           <Link href="/sign-up" className="button">
@@ -107,7 +107,9 @@ export function LandingHero() {
           </div>
           <div className="showcase-card">
             <span className="meta-chip">Test Cases</span>
-            <strong>Positive, negative, edge, and boundary coverage with export-ready output</strong>
+            <strong>
+              Positive, negative, edge, and boundary coverage with export-ready output
+            </strong>
           </div>
           <div className="showcase-card">
             <span className="meta-chip">Workspace</span>
@@ -215,13 +217,7 @@ export function SectionIntro({
   );
 }
 
-export function ContentSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+export function ContentSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="policy-section">
       <h2>{title}</h2>
@@ -248,10 +244,10 @@ function PublicNavLink({
   label: string;
   currentPath: string;
 }) {
-  const active = href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+  const active = href === '/' ? currentPath === '/' : currentPath.startsWith(href);
 
   return (
-    <Link href={href} className={`public-nav-link ${active ? "active" : ""}`}>
+    <Link href={href} className={`public-nav-link ${active ? 'active' : ''}`}>
       {label}
     </Link>
   );

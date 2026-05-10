@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getAvailableAIProviders } from "@/lib/env";
-import { getCurrentUser } from "@/server/auth/current-user";
+import { getAvailableAIProviders } from '@/lib/env';
+import { getCurrentUser } from '@/server/auth/current-user';
 
 export async function GET() {
   const user = await getCurrentUser();

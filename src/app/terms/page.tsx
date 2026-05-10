@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-import { ContentSection, PageHero, PublicSiteShell } from "@/components/public-site";
+import { ContentSection, PageHero, PublicSiteShell } from '@/components/public-site';
 
 export const metadata: Metadata = {
-  title: "Terms of Service | QA Copilot",
-  description: "Terms of service for QA Copilot.",
+  title: 'Terms of Service | QA Copilot',
+  description: 'Terms of service for QA Copilot.',
 };
 
 export default function TermsPage() {

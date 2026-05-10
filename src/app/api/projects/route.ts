@@ -1,32 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
-import { jsonError } from "@/lib/api/errors";
-import { prisma } from "@/lib/prisma";
-import { createProjectRequestSchema } from "@/lib/validators/project";
-import { getCurrentUser } from "@/server/auth/current-user";
-import { mapProject } from "@/server/services/mappers";
+import { jsonError } from '@/lib/api/errors';
+import { prisma } from '@/lib/prisma';
+import { createProjectRequestSchema } from '@/lib/validators/project';
+import { getCurrentUser } from '@/server/auth/current-user';
+import { mapProject } from '@/server/services/mappers';
 
 export async function GET() {
   try {
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonError("UNAUTHORIZED", "You must sign in to view projects.", 401);
+      return jsonError('UNAUTHORIZED', 'You must sign in to view projects.', 401);
     }
     const projects = await prisma.project.findMany({
       where: {
         userId: user.id,
       },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: 'desc',
       },
     });
 
     return NextResponse.json(projects.map(mapProject), { status: 200 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to load projects.";
-    return jsonError("PROJECTS_FETCH_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to load projects.';
+    return jsonError('PROJECTS_FETCH_FAILED', message, 500);
   }
 }
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonError("UNAUTHORIZED", "You must sign in to create a project.", 401);
+      return jsonError('UNAUTHORIZED', 'You must sign in to create a project.', 401);
     }
 
     const project = await prisma.project.create({
@@ -51,14 +51,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(mapProject(project), { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return jsonError("INVALID_JSON", "Request body must be valid JSON.", 400);
+      return jsonError('INVALID_JSON', 'Request body must be valid JSON.', 400);
     }
 
     if (error instanceof ZodError) {
-      return jsonError("VALIDATION_ERROR", error.issues[0]?.message ?? "Invalid request.", 400);
+      return jsonError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Invalid request.', 400);
     }
 
-    const message = error instanceof Error ? error.message : "Unable to create project.";
-    return jsonError("PROJECT_CREATE_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to create project.';
+    return jsonError('PROJECT_CREATE_FAILED', message, 500);
   }
 }

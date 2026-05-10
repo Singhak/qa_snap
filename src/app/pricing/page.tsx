@@ -1,44 +1,44 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-import { PageHero, PublicSiteShell } from "@/components/public-site";
+import { PageHero, PublicSiteShell } from '@/components/public-site';
 
 export const metadata: Metadata = {
-  title: "Pricing | QA Copilot",
-  description: "Pricing plans for QA Copilot.",
+  title: 'Pricing | QA Copilot',
+  description: 'Pricing plans for QA Copilot.',
 };
 
 const plans = [
   {
-    name: "Starter",
-    price: "Free",
-    blurb: "For individual testers validating the workflow.",
+    name: 'Starter',
+    price: 'Free',
+    blurb: 'For individual testers validating the workflow.',
     features: [
-      "Up to 20 generations per month",
-      "1 active project",
-      "Editable bug reports and test cases",
-      "CSV, JSON, and Markdown export",
+      'Up to 20 generations per month',
+      '1 active project',
+      'Editable bug reports and test cases',
+      'CSV, JSON, and Markdown export',
     ],
   },
   {
-    name: "Pro",
-    price: "$29 / user / month",
-    blurb: "For serious individual QA contributors and consultants.",
+    name: 'Pro',
+    price: '$29 / user / month',
+    blurb: 'For serious individual QA contributors and consultants.',
     features: [
-      "Higher monthly generation limits",
-      "Unlimited saved projects",
-      "Multi-provider AI selection",
-      "Priority support and roadmap access",
+      'Higher monthly generation limits',
+      'Unlimited saved projects',
+      'Multi-provider AI selection',
+      'Priority support and roadmap access',
     ],
   },
   {
-    name: "Team",
-    price: "Custom",
-    blurb: "For agencies and product teams standardizing QA workflows.",
+    name: 'Team',
+    price: 'Custom',
+    blurb: 'For agencies and product teams standardizing QA workflows.',
     features: [
-      "Shared workspace roadmap",
-      "Admin-level usage visibility",
-      "Custom onboarding support",
-      "Integration planning for Jira and test management tools",
+      'Shared workspace roadmap',
+      'Admin-level usage visibility',
+      'Custom onboarding support',
+      'Integration planning for Jira and test management tools',
     ],
   },
 ];

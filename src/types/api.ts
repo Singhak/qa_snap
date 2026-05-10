@@ -1,8 +1,8 @@
-export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-export type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-export type CaseType = "POSITIVE" | "NEGATIVE" | "EDGE" | "BOUNDARY";
-export type GenerationMode = "SMOKE" | "REGRESSION" | "EDGE_HEAVY";
-export type AIProvider = "OPENAI" | "OPENROUTER" | "GEMINI" | "ANTHROPIC";
+export type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type CaseType = 'POSITIVE' | 'NEGATIVE' | 'EDGE' | 'BOUNDARY';
+export type GenerationMode = 'SMOKE' | 'REGRESSION' | 'EDGE_HEAVY';
+export type AIProvider = 'OPENAI' | 'OPENROUTER' | 'GEMINI' | 'ANTHROPIC';
 
 export interface AIProviderOption {
   id: AIProvider;
@@ -10,7 +10,7 @@ export interface AIProviderOption {
   model: string;
   supportsVision: boolean;
 }
-export type TestCaseAttachmentKind = "TEXT" | "IMAGE";
+export type TestCaseAttachmentKind = 'TEXT' | 'IMAGE';
 
 export interface TestCaseSourceAttachment {
   id: string;
@@ -84,7 +84,7 @@ export interface UserSettingsDto {
 
 export interface UpdateUserSettingsRequest {
   name?: string;
-  preferredProvider?: AIProvider | "";
+  preferredProvider?: AIProvider | '';
 }
 
 export interface CreateProjectRequest {

@@ -1,8 +1,8 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { BugReportExportActions } from "@/components/bug-report-export-actions";
-import { TestCaseExportActions } from "@/components/test-case-export-actions";
-import type { SavedBugReportDto, SavedTestCaseBatchDto } from "@/types/api";
+import { BugReportExportActions } from '@/components/bug-report-export-actions';
+import { TestCaseExportActions } from '@/components/test-case-export-actions';
+import type { SavedBugReportDto, SavedTestCaseBatchDto } from '@/types/api';
 
 export function BugReportDetailView({ report }: { report: SavedBugReportDto }) {
   return (
@@ -49,7 +49,7 @@ export function BugReportDetailView({ report }: { report: SavedBugReportDto }) {
             </div>
           </div>
           <div className="detail-grid">
-            <InfoBlock title="Environment" body={report.environmentSummary ?? "Not specified"} />
+            <InfoBlock title="Environment" body={report.environmentSummary ?? 'Not specified'} />
             <InfoBlock title="Raw Notes" body={report.rawInput} />
           </div>
         </section>
@@ -122,8 +122,11 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
             </div>
           </div>
           <InfoBlock title="Requirement" body={batch.sourceRequirement} />
-          <InfoBlock title="Acceptance Criteria" body={batch.acceptanceCriteria ?? "Not specified"} />
-          <InfoBlock title="QA Context Notes" body={batch.contextNotes ?? "Not specified"} />
+          <InfoBlock
+            title="Acceptance Criteria"
+            body={batch.acceptanceCriteria ?? 'Not specified'}
+          />
+          <InfoBlock title="QA Context Notes" body={batch.contextNotes ?? 'Not specified'} />
         </section>
 
         <section className="panel">
@@ -136,7 +139,7 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
           <div className="detail-grid">
             <InfoBlock title="Generation Mode" body={batch.generationMode} />
             <InfoBlock title="Case Count" body={String(batch.cases.length)} />
-            <InfoBlock title="AI Provider" body={batch.provider ?? "Not captured"} />
+            <InfoBlock title="AI Provider" body={batch.provider ?? 'Not captured'} />
           </div>
         </section>
       </section>
@@ -158,9 +161,9 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
                 </div>
                 <p className="meta-line">{attachment.mimeType}</p>
                 <p className="meta-line">
-                  {attachment.kind === "TEXT"
-                    ? truncateSourcePreview(attachment.textContent ?? "")
-                    : "Image reference saved with this batch."}
+                  {attachment.kind === 'TEXT'
+                    ? truncateSourcePreview(attachment.textContent ?? '')
+                    : 'Image reference saved with this batch.'}
                 </p>
               </article>
             ))}
@@ -188,7 +191,11 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
               <div className="detail-grid">
                 <InfoBlock
                   title="Preconditions"
-                  body={testCase.preconditions.length ? testCase.preconditions.join("\n") : "No special preconditions"}
+                  body={
+                    testCase.preconditions.length
+                      ? testCase.preconditions.join('\n')
+                      : 'No special preconditions'
+                  }
                 />
                 <InfoBlock title="Expected Result" body={testCase.expectedResult} />
               </div>
@@ -218,5 +225,5 @@ function InfoBlock({ title, body }: { title: string; body: string }) {
 }
 
 function truncateSourcePreview(value: string) {
-  return value.length > 220 ? `${value.slice(0, 220)}...` : value || "No preview available.";
+  return value.length > 220 ? `${value.slice(0, 220)}...` : value || 'No preview available.';
 }

@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
-import { ZodError } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 
-import { jsonError } from "@/lib/api/errors";
-import { prisma } from "@/lib/prisma";
-import { saveTestCaseBatchRequestSchema } from "@/lib/validators/test-case";
-import { getCurrentUser } from "@/server/auth/current-user";
-import { mapTestCaseBatch } from "@/server/services/mappers";
+import { jsonError } from '@/lib/api/errors';
+import { prisma } from '@/lib/prisma';
+import { saveTestCaseBatchRequestSchema } from '@/lib/validators/test-case';
+import { getCurrentUser } from '@/server/auth/current-user';
+import { mapTestCaseBatch } from '@/server/services/mappers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonError("UNAUTHORIZED", "You must sign in to save test case batches.", 401);
+      return jsonError('UNAUTHORIZED', 'You must sign in to save test case batches.', 401);
     }
 
     const project = await prisma.project.findFirst({
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!project) {
-      return jsonError("PROJECT_NOT_FOUND", "Create or select a project before saving.", 404);
+      return jsonError('PROJECT_NOT_FOUND', 'Create or select a project before saving.', 404);
     }
 
     const createData: Prisma.TestCaseBatchCreateInput = {
@@ -44,10 +44,12 @@ export async function POST(request: NextRequest) {
       sourceRequirement: input.sourceRequirement,
       acceptanceCriteria: input.acceptanceCriteria,
       contextNotes: input.contextNotes,
-      sourceMaterials: input.attachments ? (input.attachments as Prisma.InputJsonValue) : Prisma.JsonNull,
+      sourceMaterials: input.attachments
+        ? (input.attachments as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
       provider: input.provider,
       generationMode: input.generationMode,
-      status: "SAVED",
+      status: 'SAVED',
       testCases: {
         create: input.cases.map((testCase) => ({
           project: {
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
           priority: testCase.priority,
           caseType: testCase.caseType,
           tags: testCase.tags ? (testCase.tags as Prisma.InputJsonValue) : Prisma.JsonNull,
-          status: "SAVED",
+          status: 'SAVED',
         })),
       },
     };
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
       include: {
         testCases: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
         },
       },
@@ -90,14 +92,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(mapTestCaseBatch(batch), { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return jsonError("INVALID_JSON", "Request body must be valid JSON.", 400);
+      return jsonError('INVALID_JSON', 'Request body must be valid JSON.', 400);
     }
 
     if (error instanceof ZodError) {
-      return jsonError("VALIDATION_ERROR", error.issues[0]?.message ?? "Invalid request.", 400);
+      return jsonError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Invalid request.', 400);
     }
 
-    const message = error instanceof Error ? error.message : "Unable to save test case batch.";
-    return jsonError("TEST_CASE_BATCH_SAVE_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to save test case batch.';
+    return jsonError('TEST_CASE_BATCH_SAVE_FAILED', message, 500);
   }
 }

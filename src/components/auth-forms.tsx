@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export function SignInForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -16,18 +16,18 @@ export function SignInForm() {
     setError(null);
 
     startTransition(async () => {
-      const result = await signIn("credentials", {
+      const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Invalid email or password.");
+        setError('Invalid email or password.');
         return;
       }
 
-      router.push("/dashboard");
+      router.push('/dashboard');
       router.refresh();
     });
   }
@@ -55,7 +55,7 @@ export function SignInForm() {
         />
       </div>
       <button className="button" type="submit" disabled={isPending}>
-        {isPending ? "Signing in..." : "Sign In"}
+        {isPending ? 'Signing in...' : 'Sign In'}
       </button>
       {error ? <p className="meta error-text">{error}</p> : null}
     </form>
@@ -64,9 +64,9 @@ export function SignInForm() {
 
 export function SignUpForm() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -75,10 +75,10 @@ export function SignUpForm() {
     setError(null);
 
     startTransition(async () => {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name,
@@ -90,22 +90,22 @@ export function SignUpForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data?.error?.message ?? "Unable to create account.");
+        setError(data?.error?.message ?? 'Unable to create account.');
         return;
       }
 
-      const result = await signIn("credentials", {
+      const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Account created, but automatic sign-in failed.");
+        setError('Account created, but automatic sign-in failed.');
         return;
       }
 
-      router.push("/dashboard");
+      router.push('/dashboard');
       router.refresh();
     });
   }
@@ -142,7 +142,7 @@ export function SignUpForm() {
         />
       </div>
       <button className="button" type="submit" disabled={isPending}>
-        {isPending ? "Creating account..." : "Create Account"}
+        {isPending ? 'Creating account...' : 'Create Account'}
       </button>
       {error ? <p className="meta error-text">{error}</p> : null}
     </form>
@@ -159,11 +159,11 @@ export function GoogleSignInButton() {
       disabled={isPending}
       onClick={() =>
         startTransition(async () => {
-          await signIn("google", { callbackUrl: "/dashboard" });
+          await signIn('google', { callbackUrl: '/dashboard' });
         })
       }
     >
-      {isPending ? "Connecting..." : "Continue With Google"}
+      {isPending ? 'Connecting...' : 'Continue With Google'}
     </button>
   );
 }

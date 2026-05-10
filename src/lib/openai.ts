@@ -1,11 +1,11 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
-import { getProviderApiKey } from "@/lib/env";
-import type { AIProvider } from "@/types/api";
+import { getProviderApiKey } from '@/lib/env';
+import type { AIProvider } from '@/types/api';
 
 const clients = new Map<string, OpenAI>();
 
-export function getOpenAIClient(provider: Extract<AIProvider, "OPENAI" | "OPENROUTER"> = "OPENAI") {
+export function getOpenAIClient(provider: Extract<AIProvider, 'OPENAI' | 'OPENROUTER'> = 'OPENAI') {
   if (clients.has(provider)) {
     return clients.get(provider)!;
   }
@@ -18,7 +18,7 @@ export function getOpenAIClient(provider: Extract<AIProvider, "OPENAI" | "OPENRO
 
   const client = new OpenAI({
     apiKey,
-    baseURL: provider === "OPENROUTER" ? "https://openrouter.ai/api/v1" : undefined,
+    baseURL: provider === 'OPENROUTER' ? 'https://openrouter.ai/api/v1' : undefined,
   });
 
   clients.set(provider, client);

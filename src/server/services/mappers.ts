@@ -6,8 +6,8 @@ import type {
   SavedTestCaseBatchDto,
   TestCaseSourceAttachment,
   UserSettingsDto,
-} from "@/types/api";
-import type { BugReport, Prisma, Project, TestCase, TestCaseBatch, User } from "@prisma/client";
+} from '@/types/api';
+import type { BugReport, Prisma, Project, TestCase, TestCaseBatch, User } from '@prisma/client';
 
 type BugReportRecord = BugReport & {
   stepsToReproduce: Prisma.JsonValue;
@@ -27,7 +27,7 @@ type TestCaseBatchRecord = TestCaseBatch & {
   testCases: TestCaseRecord[];
 };
 
-type UserSettingsRecord = Pick<User, "id" | "name" | "email" | "preferredProvider">;
+type UserSettingsRecord = Pick<User, 'id' | 'name' | 'email' | 'preferredProvider'>;
 
 export function mapProject(project: Project): ProjectDto {
   return {
@@ -86,7 +86,7 @@ export function mapTestCaseBatch(batch: TestCaseBatchRecord): SavedTestCaseBatch
     acceptanceCriteria: batch.acceptanceCriteria,
     contextNotes: batch.contextNotes,
     sourceMaterials,
-    provider: (batch.provider as SavedTestCaseBatchDto["provider"]) ?? null,
+    provider: (batch.provider as SavedTestCaseBatchDto['provider']) ?? null,
     generationMode: batch.generationMode,
     createdAt: batch.createdAt.toISOString(),
     updatedAt: batch.updatedAt.toISOString(),
@@ -99,7 +99,7 @@ export function mapUserSettings(user: UserSettingsRecord): UserSettingsDto {
     id: user.id,
     name: user.name,
     email: user.email,
-    preferredProvider: (user.preferredProvider as UserSettingsDto["preferredProvider"]) ?? null,
+    preferredProvider: (user.preferredProvider as UserSettingsDto['preferredProvider']) ?? null,
   };
 }
 
@@ -136,7 +136,7 @@ function parseStringArray(value: Prisma.JsonValue): string[] {
     return [];
   }
 
-  return value.filter((item): item is string => typeof item === "string");
+  return value.filter((item): item is string => typeof item === 'string');
 }
 
 function parseOptionalStringArray(value: Prisma.JsonValue | null): string[] | undefined {
@@ -148,31 +148,29 @@ function parseOptionalStringArray(value: Prisma.JsonValue | null): string[] | un
 }
 
 function toSourceAttachment(value: Prisma.JsonValue): TestCaseSourceAttachment | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
 
   const record = value as Record<string, Prisma.JsonValue>;
 
   if (
-    typeof record.id !== "string" ||
-    typeof record.name !== "string" ||
-    typeof record.mimeType !== "string" ||
-    (record.kind !== "TEXT" && record.kind !== "IMAGE") ||
-    (record.textContent !== undefined && typeof record.textContent !== "string") ||
-    (record.imageDataUrl !== undefined && typeof record.imageDataUrl !== "string")
+    typeof record.id !== 'string' ||
+    typeof record.name !== 'string' ||
+    typeof record.mimeType !== 'string' ||
+    (record.kind !== 'TEXT' && record.kind !== 'IMAGE') ||
+    (record.textContent !== undefined && typeof record.textContent !== 'string') ||
+    (record.imageDataUrl !== undefined && typeof record.imageDataUrl !== 'string')
   ) {
     return null;
   }
 
-  return (
-    {
-      id: record.id,
-      name: record.name,
-      mimeType: record.mimeType,
-      kind: record.kind,
-      ...(typeof record.textContent === "string" ? { textContent: record.textContent } : {}),
-      ...(typeof record.imageDataUrl === "string" ? { imageDataUrl: record.imageDataUrl } : {}),
-    } satisfies TestCaseSourceAttachment
-  );
+  return {
+    id: record.id,
+    name: record.name,
+    mimeType: record.mimeType,
+    kind: record.kind,
+    ...(typeof record.textContent === 'string' ? { textContent: record.textContent } : {}),
+    ...(typeof record.imageDataUrl === 'string' ? { imageDataUrl: record.imageDataUrl } : {}),
+  } satisfies TestCaseSourceAttachment;
 }

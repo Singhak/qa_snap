@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from 'react';
 
-import { getApiErrorMessage } from "@/lib/api/client";
-import type { AIProvider, SavedBugReportDto } from "@/types/api";
-import type { BugDraft, BugOutput } from "@/components/workspace-model";
+import { getApiErrorMessage } from '@/lib/api/client';
+import type { AIProvider, SavedBugReportDto } from '@/types/api';
+import type { BugDraft, BugOutput } from '@/components/workspace-model';
 
 export function useBugGenerator(args: {
   defaultBugDraft: BugDraft;
   selectedProjectId: string;
-  selectedProvider: AIProvider | "";
+  selectedProvider: AIProvider | '';
   refreshProjectDetail: (projectId: string) => Promise<void>;
   setSelectedProjectId: (projectId: string) => void;
   setSaveMessage: (message: string | null) => void;
@@ -24,12 +24,12 @@ export function useBugGenerator(args: {
 
   const bugDraftDirty = useMemo(
     () => JSON.stringify(bugOutput) !== JSON.stringify(generatedBugSnapshot),
-    [bugOutput, generatedBugSnapshot],
+    [bugOutput, generatedBugSnapshot]
   );
 
   async function submitBugReport() {
     if (!args.selectedProjectId) {
-      setBugError("Create or select a project before generating.");
+      setBugError('Create or select a project before generating.');
       return;
     }
 
@@ -38,9 +38,9 @@ export function useBugGenerator(args: {
 
     return new Promise<void>((resolve) => {
       startBugTransition(async () => {
-        const response = await fetch("/api/bug-reports/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/bug-reports/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...bugDraft,
             projectId: args.selectedProjectId,
@@ -53,7 +53,7 @@ export function useBugGenerator(args: {
         if (!response.ok) {
           setBugOutput(null);
           setGeneratedBugSnapshot(null);
-          setBugError(getApiErrorMessage(data, "Bug report generation failed."));
+          setBugError(getApiErrorMessage(data, 'Bug report generation failed.'));
           resolve();
           return;
         }
@@ -68,7 +68,7 @@ export function useBugGenerator(args: {
 
   async function saveBugReport() {
     if (!args.selectedProjectId || !bugOutput) {
-      setBugError("Generate a bug report before saving.");
+      setBugError('Generate a bug report before saving.');
       return;
     }
 
@@ -78,21 +78,21 @@ export function useBugGenerator(args: {
     return new Promise<void>((resolve) => {
       startSaveBugTransition(async () => {
         const response = await fetch(
-          editingBugReportId ? `/api/bug-reports/${editingBugReportId}` : "/api/bug-reports",
+          editingBugReportId ? `/api/bug-reports/${editingBugReportId}` : '/api/bug-reports',
           {
-            method: editingBugReportId ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
+            method: editingBugReportId ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ...bugDraft,
               ...bugOutput,
               projectId: args.selectedProjectId,
             }),
-          },
+          }
         );
         const data = await response.json();
 
         if (!response.ok) {
-          setBugError(getApiErrorMessage(data, "Unable to save bug report."));
+          setBugError(getApiErrorMessage(data, 'Unable to save bug report.'));
           resolve();
           return;
         }
@@ -112,7 +112,9 @@ export function useBugGenerator(args: {
           assumptions: report.assumptions,
           confidenceScore: report.confidenceScore,
         });
-        args.setSaveMessage(`${editingBugReportId ? "Updated" : "Saved"} bug report "${report.title}".`);
+        args.setSaveMessage(
+          `${editingBugReportId ? 'Updated' : 'Saved'} bug report "${report.title}".`
+        );
         resolve();
       });
     });
@@ -122,10 +124,10 @@ export function useBugGenerator(args: {
     args.setSelectedProjectId(report.projectId);
     setBugDraft({
       rawInput: report.rawInput,
-      expectedInput: report.expectedInput ?? "",
-      actualInput: report.actualInput ?? "",
-      environmentInput: report.environmentInput ?? "",
-      logsInput: report.logsInput ?? "",
+      expectedInput: report.expectedInput ?? '',
+      actualInput: report.actualInput ?? '',
+      environmentInput: report.environmentInput ?? '',
+      logsInput: report.logsInput ?? '',
     });
 
     const output = {

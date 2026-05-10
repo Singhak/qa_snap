@@ -1,5 +1,5 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const aiProviderSchema = z.enum(["OPENAI", "OPENROUTER", "GEMINI", "ANTHROPIC"]);
+export const aiProviderSchema = z.enum(['OPENAI', 'OPENROUTER', 'GEMINI', 'ANTHROPIC']);
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;

@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-import { ContentSection, PageHero, PublicSiteShell } from "@/components/public-site";
+import { ContentSection, PageHero, PublicSiteShell } from '@/components/public-site';
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | QA Copilot",
-  description: "Privacy policy for QA Copilot.",
+  title: 'Privacy Policy | QA Copilot',
+  description: 'Privacy policy for QA Copilot.',
 };
 
 export default function PrivacyPage() {
@@ -19,8 +19,8 @@ export default function PrivacyPage() {
       <div className="policy-stack">
         <ContentSection title="Information we collect">
           <p>
-            We collect account details such as name, email, and authentication provider data.
-            We also collect workspace content you submit, including project names, bug notes,
+            We collect account details such as name, email, and authentication provider data. We
+            also collect workspace content you submit, including project names, bug notes,
             requirements, uploaded source materials, generated outputs, and usage metadata.
           </p>
         </ContentSection>

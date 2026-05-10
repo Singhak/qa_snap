@@ -1,9 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound } from 'next/navigation';
 
-import { TestCaseBatchDetailView } from "@/components/record-details";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/server/auth/current-user";
-import { mapTestCaseBatch } from "@/server/services/mappers";
+import { TestCaseBatchDetailView } from '@/components/record-details';
+import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/server/auth/current-user';
+import { mapTestCaseBatch } from '@/server/services/mappers';
 
 export default async function TestCaseBatchDetailPage({
   params,
@@ -27,7 +27,7 @@ export default async function TestCaseBatchDetailPage({
     include: {
       testCases: {
         orderBy: {
-          createdAt: "asc",
+          createdAt: 'asc',
         },
       },
     },

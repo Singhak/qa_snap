@@ -1,15 +1,11 @@
-import { notFound } from "next/navigation";
+import { notFound } from 'next/navigation';
 
-import { BugReportDetailView } from "@/components/record-details";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/server/auth/current-user";
-import { mapBugReport } from "@/server/services/mappers";
+import { BugReportDetailView } from '@/components/record-details';
+import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/server/auth/current-user';
+import { mapBugReport } from '@/server/services/mappers';
 
-export default async function BugReportDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function BugReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
 

@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-import { ContentSection, PageHero, PublicSiteShell } from "@/components/public-site";
+import { ContentSection, PageHero, PublicSiteShell } from '@/components/public-site';
 
 export const metadata: Metadata = {
-  title: "Support | QA Copilot",
-  description: "Contact and support information for QA Copilot.",
+  title: 'Support | QA Copilot',
+  description: 'Contact and support information for QA Copilot.',
 };
 
 export default function ContactPage() {

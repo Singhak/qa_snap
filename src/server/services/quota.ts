@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
 export async function assertWithinMonthlyQuota(userId: string) {
   const user = await prisma.user.findUnique({
@@ -9,7 +9,7 @@ export async function assertWithinMonthlyQuota(userId: string) {
   });
 
   if (!user) {
-    throw new Error("Unable to verify quota for the current user.");
+    throw new Error('Unable to verify quota for the current user.');
   }
 
   const startOfMonth = new Date();
@@ -27,7 +27,7 @@ export async function assertWithinMonthlyQuota(userId: string) {
 
   if (usageCount >= user.monthlyQuota) {
     throw new Error(
-      `Monthly generation quota reached (${user.monthlyQuota}). Upgrade the plan or wait until the next monthly reset.`,
+      `Monthly generation quota reached (${user.monthlyQuota}). Upgrade the plan or wait until the next monthly reset.`
     );
   }
 }

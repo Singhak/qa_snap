@@ -1,4 +1,4 @@
-type LogLevel = "info" | "warn" | "error";
+type LogLevel = 'info' | 'warn' | 'error';
 
 export function createRequestId() {
   return crypto.randomUUID();
@@ -13,7 +13,7 @@ export function logApiEvent(args: {
 }) {
   const entry = {
     ts: new Date().toISOString(),
-    level: args.level ?? "info",
+    level: args.level ?? 'info',
     requestId: args.requestId,
     route: args.route,
     message: args.message,
@@ -22,12 +22,12 @@ export function logApiEvent(args: {
 
   const line = JSON.stringify(entry);
 
-  if ((args.level ?? "info") === "error") {
+  if ((args.level ?? 'info') === 'error') {
     console.error(line);
     return;
   }
 
-  if ((args.level ?? "info") === "warn") {
+  if ((args.level ?? 'info') === 'warn') {
     console.warn(line);
     return;
   }

@@ -1,19 +1,19 @@
-import { zodTextFormat } from "openai/helpers/zod";
-import { z, ZodTypeAny } from "zod";
+import { zodTextFormat } from 'openai/helpers/zod';
+import { z, ZodTypeAny } from 'zod';
 
-import { getProviderApiKey, getServerEnv, resolveAIProvider } from "@/lib/env";
-import { getOpenAIClient } from "@/lib/openai";
-import type { AIProvider } from "@/types/api";
+import { getProviderApiKey, getServerEnv, resolveAIProvider } from '@/lib/env';
+import { getOpenAIClient } from '@/lib/openai';
+import type { AIProvider } from '@/types/api';
 
 export type StructuredInputContent =
   | {
-      type: "input_text";
+      type: 'input_text';
       text: string;
     }
   | {
-      type: "input_image";
+      type: 'input_image';
       image_url: string;
-      detail: "low" | "high" | "auto";
+      detail: 'low' | 'high' | 'auto';
     };
 
 export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
@@ -37,7 +37,7 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
   const activeProvider = resolveAIProvider(provider, env);
 
   switch (activeProvider.id) {
-    case "OPENAI":
+    case 'OPENAI':
       return generateWithOpenAI({
         schema,
         schemaName,
@@ -46,7 +46,7 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
         inputContent,
         maxOutputTokens,
       });
-    case "OPENROUTER":
+    case 'OPENROUTER':
       return generateWithOpenRouter({
         schema,
         instructions,
@@ -54,9 +54,9 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
         inputContent,
         maxOutputTokens,
         model: activeProvider.model,
-        apiKey: requireApiKey("OPENROUTER"),
+        apiKey: requireApiKey('OPENROUTER'),
       });
-    case "GEMINI":
+    case 'GEMINI':
       return generateWithGemini({
         schema,
         instructions,
@@ -64,9 +64,9 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
         inputContent,
         maxOutputTokens,
         model: activeProvider.model,
-        apiKey: requireApiKey("GEMINI"),
+        apiKey: requireApiKey('GEMINI'),
       });
-    case "ANTHROPIC":
+    case 'ANTHROPIC':
       return generateWithAnthropic({
         schema,
         instructions,
@@ -74,7 +74,7 @@ export async function generateStructuredOutput<TSchema extends ZodTypeAny>({
         inputContent,
         maxOutputTokens,
         model: activeProvider.model,
-        apiKey: requireApiKey("ANTHROPIC"),
+        apiKey: requireApiKey('ANTHROPIC'),
       });
   }
 }
@@ -94,7 +94,7 @@ async function generateWithOpenAI<TSchema extends ZodTypeAny>({
   inputContent?: StructuredInputContent[];
   maxOutputTokens: number;
 }) {
-  const openai = getOpenAIClient("OPENAI");
+  const openai = getOpenAIClient('OPENAI');
   const env = getServerEnv();
 
   const response = await openai.responses.parse({
@@ -102,8 +102,8 @@ async function generateWithOpenAI<TSchema extends ZodTypeAny>({
     instructions,
     input: [
       {
-        role: "user",
-        content: inputContent ?? [{ type: "input_text", text: prompt }],
+        role: 'user',
+        content: inputContent ?? [{ type: 'input_text', text: prompt }],
       },
     ],
     max_output_tokens: maxOutputTokens,
@@ -117,14 +117,14 @@ async function generateWithOpenAI<TSchema extends ZodTypeAny>({
   }
 
   const refusal = response.output
-    .flatMap((item) => ("content" in item && Array.isArray(item.content) ? item.content : []))
-    .find((content) => content.type === "refusal");
+    .flatMap((item) => ('content' in item && Array.isArray(item.content) ? item.content : []))
+    .find((content) => content.type === 'refusal');
 
-  if (refusal && "refusal" in refusal) {
+  if (refusal && 'refusal' in refusal) {
     throw new Error(refusal.refusal);
   }
 
-  throw new Error("The model did not return structured output.");
+  throw new Error('The model did not return structured output.');
 }
 
 async function generateWithOpenRouter<TSchema extends ZodTypeAny>({
@@ -144,27 +144,29 @@ async function generateWithOpenRouter<TSchema extends ZodTypeAny>({
   model: string;
   apiKey: string;
 }) {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model,
       messages: [
         {
-          role: "system",
+          role: 'system',
           content: buildJsonModeInstructions(instructions),
         },
         {
-          role: "user",
-          content: mapOpenAICompatibleContent(inputContent ?? [{ type: "input_text", text: prompt }]),
+          role: 'user',
+          content: mapOpenAICompatibleContent(
+            inputContent ?? [{ type: 'input_text', text: prompt }]
+          ),
         },
       ],
       max_tokens: maxOutputTokens,
       response_format: {
-        type: "json_object",
+        type: 'json_object',
       },
     }),
   });
@@ -172,7 +174,7 @@ async function generateWithOpenRouter<TSchema extends ZodTypeAny>({
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data?.error?.message ?? "OpenRouter request failed.");
+    throw new Error(data?.error?.message ?? 'OpenRouter request failed.');
   }
 
   const text = data?.choices?.[0]?.message?.content;
@@ -199,9 +201,9 @@ async function generateWithGemini<TSchema extends ZodTypeAny>({
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         systemInstruction: {
@@ -209,28 +211,28 @@ async function generateWithGemini<TSchema extends ZodTypeAny>({
         },
         contents: [
           {
-            role: "user",
-            parts: mapGeminiParts(inputContent ?? [{ type: "input_text", text: prompt }]),
+            role: 'user',
+            parts: mapGeminiParts(inputContent ?? [{ type: 'input_text', text: prompt }]),
           },
         ],
         generationConfig: {
-          responseMimeType: "application/json",
+          responseMimeType: 'application/json',
           maxOutputTokens,
         },
       }),
-    },
+    }
   );
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data?.error?.message ?? "Gemini request failed.");
+    throw new Error(data?.error?.message ?? 'Gemini request failed.');
   }
 
   const text = data?.candidates?.[0]?.content?.parts
-    ?.filter((part: { text?: string }) => typeof part.text === "string")
+    ?.filter((part: { text?: string }) => typeof part.text === 'string')
     .map((part: { text: string }) => part.text)
-    .join("\n");
+    .join('\n');
 
   return schema.parse(extractJsonPayload(text));
 }
@@ -252,12 +254,12 @@ async function generateWithAnthropic<TSchema extends ZodTypeAny>({
   model: string;
   apiKey: string;
 }) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
     },
     body: JSON.stringify({
       model,
@@ -265,8 +267,8 @@ async function generateWithAnthropic<TSchema extends ZodTypeAny>({
       system: buildJsonModeInstructions(instructions),
       messages: [
         {
-          role: "user",
-          content: mapAnthropicContent(inputContent ?? [{ type: "input_text", text: prompt }]),
+          role: 'user',
+          content: mapAnthropicContent(inputContent ?? [{ type: 'input_text', text: prompt }]),
         },
       ],
     }),
@@ -275,13 +277,13 @@ async function generateWithAnthropic<TSchema extends ZodTypeAny>({
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data?.error?.message ?? "Anthropic request failed.");
+    throw new Error(data?.error?.message ?? 'Anthropic request failed.');
   }
 
   const text = data?.content
-    ?.filter((item: { type?: string; text?: string }) => item.type === "text")
+    ?.filter((item: { type?: string; text?: string }) => item.type === 'text')
     .map((item: { text: string }) => item.text)
-    .join("\n");
+    .join('\n');
 
   return schema.parse(extractJsonPayload(text));
 }
@@ -289,23 +291,23 @@ async function generateWithAnthropic<TSchema extends ZodTypeAny>({
 function buildJsonModeInstructions(instructions: string) {
   return [
     instructions,
-    "Return JSON only.",
-    "Do not wrap the JSON in markdown fences.",
-    "Do not include explanations before or after the JSON.",
-  ].join("\n");
+    'Return JSON only.',
+    'Do not wrap the JSON in markdown fences.',
+    'Do not include explanations before or after the JSON.',
+  ].join('\n');
 }
 
 function mapOpenAICompatibleContent(content: StructuredInputContent[]) {
   return content.map((item) => {
-    if (item.type === "input_text") {
+    if (item.type === 'input_text') {
       return {
-        type: "text",
+        type: 'text',
         text: item.text,
       };
     }
 
     return {
-      type: "image_url",
+      type: 'image_url',
       image_url: {
         url: item.image_url,
         detail: item.detail,
@@ -316,7 +318,7 @@ function mapOpenAICompatibleContent(content: StructuredInputContent[]) {
 
 function mapGeminiParts(content: StructuredInputContent[]) {
   return content.map((item) => {
-    if (item.type === "input_text") {
+    if (item.type === 'input_text') {
       return { text: item.text };
     }
 
@@ -333,9 +335,9 @@ function mapGeminiParts(content: StructuredInputContent[]) {
 
 function mapAnthropicContent(content: StructuredInputContent[]) {
   return content.map((item) => {
-    if (item.type === "input_text") {
+    if (item.type === 'input_text') {
       return {
-        type: "text",
+        type: 'text',
         text: item.text,
       };
     }
@@ -343,9 +345,9 @@ function mapAnthropicContent(content: StructuredInputContent[]) {
     const parsed = splitDataUrl(item.image_url);
 
     return {
-      type: "image",
+      type: 'image',
       source: {
-        type: "base64",
+        type: 'base64',
         media_type: parsed.mimeType,
         data: parsed.base64,
       },
@@ -357,7 +359,7 @@ function splitDataUrl(value: string) {
   const match = value.match(/^data:(.+);base64,(.+)$/);
 
   if (!match) {
-    throw new Error("Image uploads must be valid base64 data URLs.");
+    throw new Error('Image uploads must be valid base64 data URLs.');
   }
 
   return {
@@ -368,7 +370,7 @@ function splitDataUrl(value: string) {
 
 function extractJsonPayload(value: string | null | undefined) {
   if (!value || !value.trim()) {
-    throw new Error("The model returned an empty response.");
+    throw new Error('The model returned an empty response.');
   }
 
   const trimmed = value.trim();
@@ -382,19 +384,19 @@ function extractJsonPayload(value: string | null | undefined) {
       return JSON.parse(fenced[1].trim());
     }
 
-    const firstBrace = trimmed.indexOf("{");
-    const firstBracket = trimmed.indexOf("[");
+    const firstBrace = trimmed.indexOf('{');
+    const firstBracket = trimmed.indexOf('[');
     const startCandidates = [firstBrace, firstBracket].filter((index) => index >= 0);
     const start = startCandidates.length ? Math.min(...startCandidates) : -1;
-    const lastBrace = trimmed.lastIndexOf("}");
-    const lastBracket = trimmed.lastIndexOf("]");
+    const lastBrace = trimmed.lastIndexOf('}');
+    const lastBracket = trimmed.lastIndexOf(']');
     const end = Math.max(lastBrace, lastBracket);
 
     if (start >= 0 && end > start) {
       return JSON.parse(trimmed.slice(start, end + 1));
     }
 
-    throw new Error("The model did not return valid JSON.");
+    throw new Error('The model did not return valid JSON.');
   }
 }
 

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getAvailableAIProviders } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
-import { createRequestId, logApiEvent, serializeError } from "@/server/monitoring";
+import { getAvailableAIProviders } from '@/lib/env';
+import { prisma } from '@/lib/prisma';
+import { createRequestId, logApiEvent, serializeError } from '@/server/monitoring';
 
 export async function GET() {
   const requestId = createRequestId();
@@ -12,10 +12,10 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        status: "ok",
+        status: 'ok',
         requestId,
         timestamp: new Date().toISOString(),
-        database: "reachable",
+        database: 'reachable',
         aiProviders: getAvailableAIProviders().map((provider) => ({
           id: provider.id,
           model: provider.model,
@@ -25,16 +25,16 @@ export async function GET() {
       {
         status: 200,
         headers: {
-          "x-request-id": requestId,
+          'x-request-id': requestId,
         },
-      },
+      }
     );
   } catch (error) {
     logApiEvent({
-      level: "error",
+      level: 'error',
       requestId,
-      route: "/api/health",
-      message: "Health check failed",
+      route: '/api/health',
+      message: 'Health check failed',
       details: {
         error: serializeError(error),
       },
@@ -42,17 +42,17 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        status: "error",
+        status: 'error',
         requestId,
         timestamp: new Date().toISOString(),
-        database: "unreachable",
+        database: 'unreachable',
       },
       {
         status: 500,
         headers: {
-          "x-request-id": requestId,
+          'x-request-id': requestId,
         },
-      },
+      }
     );
   }
 }

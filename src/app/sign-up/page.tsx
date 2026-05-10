@@ -1,6 +1,6 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { GoogleSignInButton, SignUpForm } from "@/components/auth-forms";
+import { GoogleSignInButton, SignUpForm } from '@/components/auth-forms';
 
 export default function SignUpPage() {
   const isGoogleEnabled =
@@ -12,12 +12,13 @@ export default function SignUpPage() {
         <p className="eyebrow">QA Copilot</p>
         <h1>Create your account</h1>
         <p className="panel-lead">
-          Start with email and password or use Google SSO, then create projects and store QA history under your own account.
+          Start with email and password or use Google SSO, then create projects and store QA history
+          under your own account.
         </p>
         <div className="stack">
           {isGoogleEnabled ? <GoogleSignInButton /> : null}
           <div className="auth-divider">
-            {isGoogleEnabled ? "or create an account with email" : "create an account with email"}
+            {isGoogleEnabled ? 'or create an account with email' : 'create an account with email'}
           </div>
           <SignUpForm />
           <p className="meta">

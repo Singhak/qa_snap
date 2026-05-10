@@ -1,13 +1,13 @@
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
-export const DEV_USER_EMAIL = process.env.DEV_LOGIN_EMAIL ?? "dev@qacopilot.local";
-export const DEV_USER_PASSWORD = process.env.DEV_LOGIN_PASSWORD ?? "Password123!";
-export const DEV_USER_NAME = process.env.DEV_LOGIN_NAME ?? "QA Copilot Dev";
+export const DEV_USER_EMAIL = process.env.DEV_LOGIN_EMAIL ?? 'dev@qacopilot.local';
+export const DEV_USER_PASSWORD = process.env.DEV_LOGIN_PASSWORD ?? 'Password123!';
+export const DEV_USER_NAME = process.env.DEV_LOGIN_NAME ?? 'QA Copilot Dev';
 
 export async function ensureDevUser() {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === 'production') {
     return null;
   }
 

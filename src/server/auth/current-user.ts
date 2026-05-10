@@ -1,5 +1,5 @@
-import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function getCurrentUser() {
   const session = await auth();

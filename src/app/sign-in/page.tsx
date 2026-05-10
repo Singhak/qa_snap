@@ -1,14 +1,14 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { GoogleSignInButton, SignInForm } from "@/components/auth-forms";
-import { DEV_USER_EMAIL, DEV_USER_PASSWORD, ensureDevUser } from "@/server/auth/dev-user";
+import { GoogleSignInButton, SignInForm } from '@/components/auth-forms';
+import { DEV_USER_EMAIL, DEV_USER_PASSWORD, ensureDevUser } from '@/server/auth/dev-user';
 
 export default async function SignInPage() {
   await ensureDevUser();
 
   const isGoogleEnabled =
     Boolean(process.env.GOOGLE_CLIENT_ID) && Boolean(process.env.GOOGLE_CLIENT_SECRET);
-  const showDevLogin = process.env.NODE_ENV !== "production";
+  const showDevLogin = process.env.NODE_ENV !== 'production';
 
   return (
     <div className="auth-shell">
@@ -21,7 +21,7 @@ export default async function SignInPage() {
         <div className="stack">
           {isGoogleEnabled ? <GoogleSignInButton /> : null}
           <div className="auth-divider">
-            {isGoogleEnabled ? "or sign in with email" : "sign in with email"}
+            {isGoogleEnabled ? 'or sign in with email' : 'sign in with email'}
           </div>
           {showDevLogin ? (
             <div className="dev-auth-hint">

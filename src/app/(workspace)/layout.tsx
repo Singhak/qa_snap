@@ -1,28 +1,28 @@
-import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
+import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 
-import { auth, signOut } from "@/auth";
-import { WorkspaceProvider, WorkspaceShell } from "@/components/workspace";
+import { auth, signOut } from '@/auth';
+import { WorkspaceProvider, WorkspaceShell } from '@/components/workspace';
 
 export default async function WorkspaceLayout({ children }: { children: ReactNode }) {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   async function handleSignOut() {
-    "use server";
+    'use server';
 
     await signOut({
-      redirectTo: "/sign-in",
+      redirectTo: '/sign-in',
     });
   }
 
   return (
     <WorkspaceProvider>
       <WorkspaceShell
-        userLabel={session.user.name ?? session.user.email ?? "Account"}
+        userLabel={session.user.name ?? session.user.email ?? 'Account'}
         signOutAction={handleSignOut}
       >
         {children}

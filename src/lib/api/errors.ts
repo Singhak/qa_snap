@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export function jsonError(
   code: string,
@@ -6,7 +6,7 @@ export function jsonError(
   status: number,
   options?: {
     requestId?: string;
-  },
+  }
 ) {
   return NextResponse.json(
     {
@@ -20,9 +20,9 @@ export function jsonError(
       status,
       headers: options?.requestId
         ? {
-            "x-request-id": options.requestId,
+            'x-request-id': options.requestId,
           }
         : undefined,
-    },
+    }
   );
 }

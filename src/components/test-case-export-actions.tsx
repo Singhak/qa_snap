@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
+import { useState, useTransition } from 'react';
 
 import {
   formatTestCaseBatchAsCsv,
   formatTestCaseBatchAsJson,
   formatTestCaseBatchAsMarkdown,
-} from "@/lib/test-case-exports";
-import type { GeneratedTestCase } from "@/types/api";
+} from '@/lib/test-case-exports';
+import type { GeneratedTestCase } from '@/types/api';
 
 type ExportBatchLike = {
   featureTitle: string;
@@ -26,33 +26,37 @@ export function TestCaseExportActions({
 }) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const normalizedStem = sanitizeFileStem(fileStem ?? batch.featureTitle ?? "test-cases");
+  const normalizedStem = sanitizeFileStem(fileStem ?? batch.featureTitle ?? 'test-cases');
 
   async function copyMarkdown() {
     startTransition(async () => {
       try {
         await navigator.clipboard.writeText(formatTestCaseBatchAsMarkdown(batch));
-        setFeedback("Markdown copied to clipboard.");
+        setFeedback('Markdown copied to clipboard.');
       } catch {
-        setFeedback("Clipboard copy failed in this browser.");
+        setFeedback('Clipboard copy failed in this browser.');
       }
     });
   }
 
-  function downloadFile(kind: "csv" | "json" | "md") {
+  function downloadFile(kind: 'csv' | 'json' | 'md') {
     const content =
-      kind === "csv"
+      kind === 'csv'
         ? formatTestCaseBatchAsCsv(batch)
-        : kind === "json"
+        : kind === 'json'
           ? formatTestCaseBatchAsJson(batch)
           : formatTestCaseBatchAsMarkdown(batch);
 
     const mimeType =
-      kind === "csv" ? "text/csv;charset=utf-8" : kind === "json" ? "application/json;charset=utf-8" : "text/markdown;charset=utf-8";
+      kind === 'csv'
+        ? 'text/csv;charset=utf-8'
+        : kind === 'json'
+          ? 'application/json;charset=utf-8'
+          : 'text/markdown;charset=utf-8';
 
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
     link.download = `${normalizedStem}.${kind}`;
     document.body.appendChild(link);
@@ -65,17 +69,17 @@ export function TestCaseExportActions({
   return (
     <div className="export-actions">
       <div className="button-row">
-        <button className="button secondary" type="button" onClick={() => downloadFile("csv")}>
+        <button className="button secondary" type="button" onClick={() => downloadFile('csv')}>
           Download CSV
         </button>
-        <button className="button ghost" type="button" onClick={() => downloadFile("json")}>
+        <button className="button ghost" type="button" onClick={() => downloadFile('json')}>
           Download JSON
         </button>
-        <button className="button ghost" type="button" onClick={() => downloadFile("md")}>
+        <button className="button ghost" type="button" onClick={() => downloadFile('md')}>
           Download Markdown
         </button>
         <button className="button ghost" type="button" onClick={copyMarkdown} disabled={isPending}>
-          {isPending ? "Copying..." : "Copy Markdown"}
+          {isPending ? 'Copying...' : 'Copy Markdown'}
         </button>
       </div>
       {feedback ? <p className="meta success-text">{feedback}</p> : null}
@@ -86,8 +90,8 @@ export function TestCaseExportActions({
 function sanitizeFileStem(value: string) {
   const stem = value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
-  return stem || "test-cases";
+  return stem || 'test-cases';
 }

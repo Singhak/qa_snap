@@ -1,23 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
-import { ZodError } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 
-import { jsonError } from "@/lib/api/errors";
-import { prisma } from "@/lib/prisma";
-import { saveTestCaseBatchRequestSchema } from "@/lib/validators/test-case";
-import { getCurrentUser } from "@/server/auth/current-user";
-import { mapTestCaseBatch } from "@/server/services/mappers";
+import { jsonError } from '@/lib/api/errors';
+import { prisma } from '@/lib/prisma';
+import { saveTestCaseBatchRequestSchema } from '@/lib/validators/test-case';
+import { getCurrentUser } from '@/server/auth/current-user';
+import { mapTestCaseBatch } from '@/server/services/mappers';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonError("UNAUTHORIZED", "You must sign in to view test case batches.", 401);
+      return jsonError('UNAUTHORIZED', 'You must sign in to view test case batches.', 401);
     }
 
     const batch = await prisma.testCaseBatch.findFirst({
@@ -30,27 +27,24 @@ export async function GET(
       include: {
         testCases: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
         },
       },
     });
 
     if (!batch) {
-      return jsonError("TEST_CASE_BATCH_NOT_FOUND", "Saved test case batch was not found.", 404);
+      return jsonError('TEST_CASE_BATCH_NOT_FOUND', 'Saved test case batch was not found.', 404);
     }
 
     return NextResponse.json(mapTestCaseBatch(batch), { status: 200 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to load test case batch.";
-    return jsonError("TEST_CASE_BATCH_FETCH_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to load test case batch.';
+    return jsonError('TEST_CASE_BATCH_FETCH_FAILED', message, 500);
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const body = await request.json();
@@ -58,7 +52,7 @@ export async function PUT(
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonError("UNAUTHORIZED", "You must sign in to update test case batches.", 401);
+      return jsonError('UNAUTHORIZED', 'You must sign in to update test case batches.', 401);
     }
 
     const existing = await prisma.testCaseBatch.findFirst({
@@ -71,7 +65,7 @@ export async function PUT(
     });
 
     if (!existing) {
-      return jsonError("TEST_CASE_BATCH_NOT_FOUND", "Saved test case batch was not found.", 404);
+      return jsonError('TEST_CASE_BATCH_NOT_FOUND', 'Saved test case batch was not found.', 404);
     }
 
     await prisma.testCase.deleteMany({
@@ -90,10 +84,12 @@ export async function PUT(
       sourceRequirement: input.sourceRequirement,
       acceptanceCriteria: input.acceptanceCriteria,
       contextNotes: input.contextNotes,
-      sourceMaterials: input.attachments ? (input.attachments as Prisma.InputJsonValue) : Prisma.JsonNull,
+      sourceMaterials: input.attachments
+        ? (input.attachments as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
       provider: input.provider,
       generationMode: input.generationMode,
-      status: "SAVED",
+      status: 'SAVED',
       testCases: {
         create: input.cases.map((testCase) => ({
           project: {
@@ -108,7 +104,7 @@ export async function PUT(
           priority: testCase.priority,
           caseType: testCase.caseType,
           tags: testCase.tags ? (testCase.tags as Prisma.InputJsonValue) : Prisma.JsonNull,
-          status: "SAVED",
+          status: 'SAVED',
         })),
       },
     };
@@ -119,7 +115,7 @@ export async function PUT(
       include: {
         testCases: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
         },
       },
@@ -133,14 +129,14 @@ export async function PUT(
     return NextResponse.json(mapTestCaseBatch(batch), { status: 200 });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return jsonError("INVALID_JSON", "Request body must be valid JSON.", 400);
+      return jsonError('INVALID_JSON', 'Request body must be valid JSON.', 400);
     }
 
     if (error instanceof ZodError) {
-      return jsonError("VALIDATION_ERROR", error.issues[0]?.message ?? "Invalid request.", 400);
+      return jsonError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Invalid request.', 400);
     }
 
-    const message = error instanceof Error ? error.message : "Unable to update test case batch.";
-    return jsonError("TEST_CASE_BATCH_UPDATE_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to update test case batch.';
+    return jsonError('TEST_CASE_BATCH_UPDATE_FAILED', message, 500);
   }
 }

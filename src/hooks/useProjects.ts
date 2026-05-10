@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from 'react';
 
-import { getApiErrorMessage } from "@/lib/api/client";
-import type { CreateProjectRequest, ProjectDetailDto, ProjectDto } from "@/types/api";
+import { getApiErrorMessage } from '@/lib/api/client';
+import type { CreateProjectRequest, ProjectDetailDto, ProjectDto } from '@/types/api';
 
 export function useProjects(args: { defaultProjectDraft: CreateProjectRequest }) {
   const [projects, setProjects] = useState<ProjectDto[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [projectDetail, setProjectDetail] = useState<ProjectDetailDto | null>(null);
   const [projectDraft, setProjectDraft] = useState<CreateProjectRequest>(args.defaultProjectDraft);
   const [projectError, setProjectError] = useState<string | null>(null);
@@ -32,17 +32,17 @@ export function useProjects(args: { defaultProjectDraft: CreateProjectRequest })
     const totalTestCases =
       projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ?? 0;
     const releaseSignal =
-      totalBugReports === 0 ? "Quiet build" : totalBugReports <= 2 ? "Watchlist" : "Needs review";
+      totalBugReports === 0 ? 'Quiet build' : totalBugReports <= 2 ? 'Watchlist' : 'Needs review';
 
     return { totalProjects, totalBugReports, totalTestCases, releaseSignal };
   }, [projectDetail, projects]);
 
   async function refreshProjects(nextProjectId?: string) {
-    const response = await fetch("/api/projects", { cache: "no-store" });
+    const response = await fetch('/api/projects', { cache: 'no-store' });
     const data = await response.json();
 
     if (!response.ok) {
-      setProjectError(getApiErrorMessage(data, "Unable to load projects."));
+      setProjectError(getApiErrorMessage(data, 'Unable to load projects.'));
       return;
     }
 
@@ -53,18 +53,18 @@ export function useProjects(args: { defaultProjectDraft: CreateProjectRequest })
       nextProjectId ??
       (projectList.some((project) => project.id === selectedProjectId)
         ? selectedProjectId
-        : projectList[0]?.id ?? "");
+        : (projectList[0]?.id ?? ''));
 
     setSelectedProjectId(preferredProjectId);
     setProjectError(null);
   }
 
   async function refreshProjectDetail(projectId: string) {
-    const response = await fetch(`/api/projects/${projectId}`, { cache: "no-store" });
+    const response = await fetch(`/api/projects/${projectId}`, { cache: 'no-store' });
     const data = await response.json();
 
     if (!response.ok) {
-      setProjectError(getApiErrorMessage(data, "Unable to load project details."));
+      setProjectError(getApiErrorMessage(data, 'Unable to load project details.'));
       return;
     }
 
@@ -78,15 +78,15 @@ export function useProjects(args: { defaultProjectDraft: CreateProjectRequest })
 
     return new Promise<void>((resolve) => {
       startProjectTransition(async () => {
-        const response = await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(projectDraft),
         });
         const data = await response.json();
 
         if (!response.ok) {
-          setProjectError(getApiErrorMessage(data, "Unable to create project."));
+          setProjectError(getApiErrorMessage(data, 'Unable to create project.'));
           resolve();
           return;
         }

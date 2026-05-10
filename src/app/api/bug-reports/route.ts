@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
-import { jsonError } from "@/lib/api/errors";
-import { prisma } from "@/lib/prisma";
-import { saveBugReportRequestSchema } from "@/lib/validators/bug-report";
-import { getCurrentUser } from "@/server/auth/current-user";
-import { mapBugReport } from "@/server/services/mappers";
+import { jsonError } from '@/lib/api/errors';
+import { prisma } from '@/lib/prisma';
+import { saveBugReportRequestSchema } from '@/lib/validators/bug-report';
+import { getCurrentUser } from '@/server/auth/current-user';
+import { mapBugReport } from '@/server/services/mappers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonError("UNAUTHORIZED", "You must sign in to save bug reports.", 401);
+      return jsonError('UNAUTHORIZED', 'You must sign in to save bug reports.', 401);
     }
 
     const project = await prisma.project.findFirst({
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!project) {
-      return jsonError("PROJECT_NOT_FOUND", "Create or select a project before saving.", 404);
+      return jsonError('PROJECT_NOT_FOUND', 'Create or select a project before saving.', 404);
     }
 
     const bugReport = await prisma.bugReport.create({
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         environmentSummary: input.environmentSummary,
         assumptions: input.assumptions,
         confidenceScore: input.confidenceScore,
-        status: "SAVED",
+        status: 'SAVED',
       },
     });
 
@@ -63,14 +63,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(mapBugReport(bugReport as never), { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return jsonError("INVALID_JSON", "Request body must be valid JSON.", 400);
+      return jsonError('INVALID_JSON', 'Request body must be valid JSON.', 400);
     }
 
     if (error instanceof ZodError) {
-      return jsonError("VALIDATION_ERROR", error.issues[0]?.message ?? "Invalid request.", 400);
+      return jsonError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Invalid request.', 400);
     }
 
-    const message = error instanceof Error ? error.message : "Unable to save bug report.";
-    return jsonError("BUG_REPORT_SAVE_FAILED", message, 500);
+    const message = error instanceof Error ? error.message : 'Unable to save bug report.';
+    return jsonError('BUG_REPORT_SAVE_FAILED', message, 500);
   }
 }

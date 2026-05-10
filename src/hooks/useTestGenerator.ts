@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from 'react';
 
-import { getApiErrorMessage } from "@/lib/api/client";
-import type { AIProvider, SavedTestCaseBatchDto } from "@/types/api";
-import type { TestCaseDraft, TestOutput } from "@/components/workspace-model";
+import { getApiErrorMessage } from '@/lib/api/client';
+import type { AIProvider, SavedTestCaseBatchDto } from '@/types/api';
+import type { TestCaseDraft, TestOutput } from '@/components/workspace-model';
 
 export function useTestGenerator(args: {
   defaultTestCaseDraft: TestCaseDraft;
   selectedProjectId: string;
-  selectedProvider: AIProvider | "";
+  selectedProvider: AIProvider | '';
   refreshProjectDetail: (projectId: string) => Promise<void>;
   setSelectedProjectId: (projectId: string) => void;
-  setSelectedProvider: React.Dispatch<React.SetStateAction<AIProvider | "">>;
+  setSelectedProvider: React.Dispatch<React.SetStateAction<AIProvider | ''>>;
   setSaveMessage: (message: string | null) => void;
 }) {
   const [testCaseDraft, setTestCaseDraft] = useState<TestCaseDraft>(args.defaultTestCaseDraft);
@@ -25,12 +25,12 @@ export function useTestGenerator(args: {
 
   const testDraftDirty = useMemo(
     () => JSON.stringify(testOutput) !== JSON.stringify(generatedTestSnapshot),
-    [testOutput, generatedTestSnapshot],
+    [testOutput, generatedTestSnapshot]
   );
 
   async function submitTestCases() {
     if (!args.selectedProjectId) {
-      setTestError("Create or select a project before generating.");
+      setTestError('Create or select a project before generating.');
       return;
     }
 
@@ -39,9 +39,9 @@ export function useTestGenerator(args: {
 
     return new Promise<void>((resolve) => {
       startTestTransition(async () => {
-        const response = await fetch("/api/test-cases/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/test-cases/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...testCaseDraft,
             projectId: args.selectedProjectId,
@@ -54,7 +54,7 @@ export function useTestGenerator(args: {
         if (!response.ok) {
           setTestOutput(null);
           setGeneratedTestSnapshot(null);
-          setTestError(getApiErrorMessage(data, "Test case generation failed."));
+          setTestError(getApiErrorMessage(data, 'Test case generation failed.'));
           resolve();
           return;
         }
@@ -69,7 +69,7 @@ export function useTestGenerator(args: {
 
   async function saveTestCases() {
     if (!args.selectedProjectId || !testOutput) {
-      setTestError("Generate test cases before saving.");
+      setTestError('Generate test cases before saving.');
       return;
     }
 
@@ -79,22 +79,22 @@ export function useTestGenerator(args: {
     return new Promise<void>((resolve) => {
       startSaveCasesTransition(async () => {
         const response = await fetch(
-          editingTestCaseBatchId ? `/api/test-cases/${editingTestCaseBatchId}` : "/api/test-cases",
+          editingTestCaseBatchId ? `/api/test-cases/${editingTestCaseBatchId}` : '/api/test-cases',
           {
-            method: editingTestCaseBatchId ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
+            method: editingTestCaseBatchId ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ...testCaseDraft,
               projectId: args.selectedProjectId,
               provider: args.selectedProvider || undefined,
               cases: testOutput.cases,
             }),
-          },
+          }
         );
         const data = await response.json();
 
         if (!response.ok) {
-          setTestError(getApiErrorMessage(data, "Unable to save test cases."));
+          setTestError(getApiErrorMessage(data, 'Unable to save test cases.'));
           resolve();
           return;
         }
@@ -104,7 +104,7 @@ export function useTestGenerator(args: {
         setEditingTestCaseBatchId(batch.id);
         setGeneratedTestSnapshot({ cases: batch.cases });
         args.setSaveMessage(
-          `${editingTestCaseBatchId ? "Updated" : "Saved"} ${batch.cases.length} test cases for "${batch.featureTitle}".`,
+          `${editingTestCaseBatchId ? 'Updated' : 'Saved'} ${batch.cases.length} test cases for "${batch.featureTitle}".`
         );
         resolve();
       });
@@ -120,8 +120,8 @@ export function useTestGenerator(args: {
     setTestCaseDraft({
       featureTitle: batch.featureTitle,
       sourceRequirement: batch.sourceRequirement,
-      acceptanceCriteria: batch.acceptanceCriteria ?? "",
-      contextNotes: batch.contextNotes ?? "",
+      acceptanceCriteria: batch.acceptanceCriteria ?? '',
+      contextNotes: batch.contextNotes ?? '',
       generationMode: batch.generationMode,
       attachments: batch.sourceMaterials ?? [],
     });

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   createContext,
   useContext,
@@ -9,10 +9,10 @@ import {
   useState,
   useTransition,
   type ReactNode,
-} from "react";
+} from 'react';
 
-import { BugReportExportActions } from "@/components/bug-report-export-actions";
-import { TestCaseExportActions } from "@/components/test-case-export-actions";
+import { BugReportExportActions } from '@/components/bug-report-export-actions';
+import { TestCaseExportActions } from '@/components/test-case-export-actions';
 import {
   defaultBugDraft,
   defaultProjectDraft,
@@ -21,11 +21,11 @@ import {
   type BugDraft,
   type SettingsDraft,
   type TestCaseDraft,
-} from "@/components/workspace-model";
-import { useBugGenerator } from "@/hooks/useBugGenerator";
-import { useProjects } from "@/hooks/useProjects";
-import { useTestGenerator } from "@/hooks/useTestGenerator";
-import { getApiErrorMessage } from "@/lib/api/client";
+} from '@/components/workspace-model';
+import { useBugGenerator } from '@/hooks/useBugGenerator';
+import { useProjects } from '@/hooks/useProjects';
+import { useTestGenerator } from '@/hooks/useTestGenerator';
+import { getApiErrorMessage } from '@/lib/api/client';
 import type {
   AIProvider,
   AIProviderOption,
@@ -39,12 +39,12 @@ import type {
   SavedTestCaseBatchDto,
   TestCaseSourceAttachment,
   UserSettingsDto,
-} from "@/types/api";
+} from '@/types/api';
 
 type WorkspaceContextValue = {
   availableProviders: AIProviderOption[];
-  selectedProvider: AIProvider | "";
-  setSelectedProvider: React.Dispatch<React.SetStateAction<AIProvider | "">>;
+  selectedProvider: AIProvider | '';
+  setSelectedProvider: React.Dispatch<React.SetStateAction<AIProvider | ''>>;
   userSettings: UserSettingsDto | null;
   settingsDraft: SettingsDraft;
   setSettingsDraft: React.Dispatch<React.SetStateAction<SettingsDraft>>;
@@ -101,7 +101,7 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [availableProviders, setAvailableProviders] = useState<AIProviderOption[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider | "">("");
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider | ''>('');
   const [userSettings, setUserSettings] = useState<UserSettingsDto | null>(null);
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(defaultSettingsDraft);
   const [isSavingSettings, startSaveSettingsTransition] = useTransition();
@@ -193,14 +193,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setSelectedProvider((current) =>
       current && availableProviders.some((provider) => provider.id === current)
         ? current
-        : userSettings?.preferredProvider && availableProviders.some((provider) => provider.id === userSettings.preferredProvider)
+        : userSettings?.preferredProvider &&
+            availableProviders.some((provider) => provider.id === userSettings.preferredProvider)
           ? userSettings.preferredProvider
-          : (availableProviders[0]?.id ?? ""),
+          : (availableProviders[0]?.id ?? '')
     );
   }, [availableProviders, userSettings?.preferredProvider]);
 
   async function refreshProviders() {
-    const response = await fetch("/api/ai/providers", { cache: "no-store" });
+    const response = await fetch('/api/ai/providers', { cache: 'no-store' });
     const data = await response.json();
 
     if (!response.ok) {
@@ -212,7 +213,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshUserSettings() {
-    const response = await fetch("/api/settings/profile", { cache: "no-store" });
+    const response = await fetch('/api/settings/profile', { cache: 'no-store' });
     const data = await response.json();
 
     if (!response.ok) {
@@ -222,8 +223,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const profile = data as UserSettingsDto;
     setUserSettings(profile);
     setSettingsDraft({
-      name: profile.name ?? "",
-      preferredProvider: profile.preferredProvider ?? "",
+      name: profile.name ?? '',
+      preferredProvider: profile.preferredProvider ?? '',
     });
   }
 
@@ -233,15 +234,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     return new Promise<void>((resolve) => {
       startSaveSettingsTransition(async () => {
-        const response = await fetch("/api/settings/profile", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/settings/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(settingsDraft),
         });
         const data = await response.json();
 
         if (!response.ok) {
-          setProjectError(getApiErrorMessage(data, "Unable to save settings."));
+          setProjectError(getApiErrorMessage(data, 'Unable to save settings.'));
           resolve();
           return;
         }
@@ -249,7 +250,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         const profile = data as UserSettingsDto;
         setUserSettings(profile);
         setSelectedProvider(profile.preferredProvider ?? selectedProvider);
-        setSaveMessage("Settings saved.");
+        setSaveMessage('Settings saved.');
         resolve();
       });
     });
@@ -325,7 +326,8 @@ export function WorkspaceShell({
   const pathname = usePathname();
   const workspace = useWorkspace();
   const activeProvider =
-    workspace.availableProviders.find((provider) => provider.id === workspace.selectedProvider) ?? null;
+    workspace.availableProviders.find((provider) => provider.id === workspace.selectedProvider) ??
+    null;
 
   return (
     <div className="dashboard-shell">
@@ -342,7 +344,7 @@ export function WorkspaceShell({
                 id="workspace-provider"
                 value={workspace.selectedProvider}
                 onChange={(event) =>
-                  workspace.setSelectedProvider(event.target.value as AIProvider | "")
+                  workspace.setSelectedProvider(event.target.value as AIProvider | '')
                 }
               >
                 {workspace.availableProviders.length ? (
@@ -359,12 +361,12 @@ export function WorkspaceShell({
             <p className="meta-line">
               {activeProvider
                 ? `Using ${activeProvider.label} with ${activeProvider.model}`
-                : "Add an AI provider key in .env.local to enable generation."}
+                : 'Add an AI provider key in .env.local to enable generation.'}
             </p>
           </div>
           <div className="topbar-status">
             <span className="signal-dot" />
-            <span>{workspace.isBootstrapping ? "Syncing workspace" : "Workspace live"}</span>
+            <span>{workspace.isBootstrapping ? 'Syncing workspace' : 'Workspace live'}</span>
           </div>
           <form action={signOutAction}>
             <div className="topbar-user">
@@ -386,9 +388,8 @@ export function WorkspaceShell({
           </div>
           <h2>Move from rough notes to saved QA assets in one flow.</h2>
           <p>
-            Route by route, this now behaves like a real product workspace:
-            projects on the left, focused pages in the center, and saved QA memory
-            always close by.
+            Route by route, this now behaves like a real product workspace: projects on the left,
+            focused pages in the center, and saved QA memory always close by.
           </p>
         </div>
 
@@ -396,24 +397,28 @@ export function WorkspaceShell({
           <MetricCard label="Projects" value={String(workspace.metrics.totalProjects)} />
           <MetricCard label="Saved Bugs" value={String(workspace.metrics.totalBugReports)} />
           <MetricCard label="Saved Cases" value={String(workspace.metrics.totalTestCases)} />
-          <MetricCard label="Release Signal" value={workspace.metrics.releaseSignal} tone="accent" />
+          <MetricCard
+            label="Release Signal"
+            value={workspace.metrics.releaseSignal}
+            tone="accent"
+          />
         </div>
       </section>
 
       <nav className="app-nav">
-        <NavLink href="/dashboard" active={pathname === "/dashboard"}>
+        <NavLink href="/dashboard" active={pathname === '/dashboard'}>
           Dashboard
         </NavLink>
-        <NavLink href="/projects" active={pathname === "/projects"}>
+        <NavLink href="/projects" active={pathname === '/projects'}>
           Projects
         </NavLink>
-        <NavLink href="/bug-reports" active={pathname === "/bug-reports"}>
+        <NavLink href="/bug-reports" active={pathname === '/bug-reports'}>
           Bug Reports
         </NavLink>
-        <NavLink href="/test-cases" active={pathname === "/test-cases"}>
+        <NavLink href="/test-cases" active={pathname === '/test-cases'}>
           Test Cases
         </NavLink>
-        <NavLink href="/settings" active={pathname === "/settings"}>
+        <NavLink href="/settings" active={pathname === '/settings'}>
           Settings
         </NavLink>
       </nav>
@@ -429,7 +434,8 @@ export function WorkspaceShell({
 }
 
 export function ProjectsSidebar() {
-  const { projects, selectedProjectId, setSelectedProjectId, projectError, saveMessage } = useWorkspace();
+  const { projects, selectedProjectId, setSelectedProjectId, projectError, saveMessage } =
+    useWorkspace();
 
   return (
     <section className="panel sidebar-panel">
@@ -463,7 +469,7 @@ export function ProjectsSidebar() {
             <button
               key={project.id}
               type="button"
-              className={`project-row ${selectedProjectId === project.id ? "active" : ""}`}
+              className={`project-row ${selectedProjectId === project.id ? 'active' : ''}`}
               onClick={() => setSelectedProjectId(project.id)}
             >
               <span>{project.name}</span>
@@ -488,13 +494,17 @@ export function ActiveWorkspacePanel() {
     <section className="panel active-project-panel">
       <SectionHeader
         eyebrow="Active Workspace"
-        title={projectDetail?.name ?? "Choose a project to begin"}
-        trailing={<div className="status-pill">{projectDetail ? "Project selected" : "No project selected"}</div>}
+        title={projectDetail?.name ?? 'Choose a project to begin'}
+        trailing={
+          <div className="status-pill">
+            {projectDetail ? 'Project selected' : 'No project selected'}
+          </div>
+        }
       />
 
       <p className="panel-lead">
         {projectDetail?.description ??
-          "Your selected project will show recent saved QA assets, trend hints, and quick actions here."}
+          'Your selected project will show recent saved QA assets, trend hints, and quick actions here.'}
       </p>
 
       <div className="overview-grid">
@@ -511,7 +521,7 @@ export function ActiveWorkspacePanel() {
         <SummaryTile
           label="Coverage volume"
           value={String(
-            projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ?? 0,
+            projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ?? 0
           )}
           helper="Total generated cases attached to this workspace"
         />
@@ -520,9 +530,17 @@ export function ActiveWorkspacePanel() {
   );
 }
 
-function NavLink({ href, active, children }: { href: string; active: boolean; children: ReactNode }) {
+function NavLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: ReactNode;
+}) {
   return (
-    <Link href={href} className={`nav-link ${active ? "active" : ""}`}>
+    <Link href={href} className={`nav-link ${active ? 'active' : ''}`}>
       {children}
     </Link>
   );
@@ -548,16 +566,32 @@ export function SectionHeader({
   );
 }
 
-function MetricCard({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "accent" }) {
+function MetricCard({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string;
+  value: string;
+  tone?: 'default' | 'accent';
+}) {
   return (
-    <div className={`metric-card ${tone === "accent" ? "accent" : ""}`}>
+    <div className={`metric-card ${tone === 'accent' ? 'accent' : ''}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
   );
 }
 
-export function SummaryTile({ label, value, helper }: { label: string; value: string; helper: string }) {
+export function SummaryTile({
+  label,
+  value,
+  helper,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+}) {
   return (
     <div className="summary-tile">
       <span>{label}</span>
@@ -576,7 +610,7 @@ export function EditableBugReport({
 }) {
   const updateField = <K extends keyof GenerateBugReportResponse>(
     key: K,
-    value: GenerateBugReportResponse[K],
+    value: GenerateBugReportResponse[K]
   ) => {
     onChange((current) => (current ? { ...current, [key]: value } : current));
   };
@@ -589,7 +623,9 @@ export function EditableBugReport({
           <select
             className="inline-select"
             value={report.severity}
-            onChange={(event) => updateField("severity", event.target.value as GenerateBugReportResponse["severity"])}
+            onChange={(event) =>
+              updateField('severity', event.target.value as GenerateBugReportResponse['severity'])
+            }
           >
             <option value="LOW">LOW</option>
             <option value="MEDIUM">MEDIUM</option>
@@ -600,12 +636,12 @@ export function EditableBugReport({
         <InlineField
           label="Title"
           value={report.title}
-          onChange={(value) => updateField("title", value)}
+          onChange={(value) => updateField('title', value)}
         />
         <InlineArea
           label="Summary"
           value={report.summary}
-          onChange={(value) => updateField("summary", value)}
+          onChange={(value) => updateField('summary', value)}
           rows={4}
         />
       </div>
@@ -613,35 +649,35 @@ export function EditableBugReport({
         <h4>Steps to reproduce</h4>
         <EditableStringList
           items={report.stepsToReproduce}
-          onChange={(stepsToReproduce) => updateField("stepsToReproduce", stepsToReproduce)}
+          onChange={(stepsToReproduce) => updateField('stepsToReproduce', stepsToReproduce)}
         />
       </div>
       <div className="detail-grid">
         <InlineArea
           label="Expected Result"
           value={report.expectedResult}
-          onChange={(value) => updateField("expectedResult", value)}
+          onChange={(value) => updateField('expectedResult', value)}
           rows={4}
         />
         <InlineArea
           label="Actual Result"
           value={report.actualResult}
-          onChange={(value) => updateField("actualResult", value)}
+          onChange={(value) => updateField('actualResult', value)}
           rows={4}
         />
       </div>
       <div className="detail-grid">
         <InlineArea
           label="Environment"
-          value={report.environmentSummary ?? ""}
-          onChange={(value) => updateField("environmentSummary", value)}
+          value={report.environmentSummary ?? ''}
+          onChange={(value) => updateField('environmentSummary', value)}
           placeholder="Not specified"
           rows={3}
         />
         <EditableStringList
           label="Assumptions"
           items={report.assumptions}
-          onChange={(assumptions) => updateField("assumptions", assumptions)}
+          onChange={(assumptions) => updateField('assumptions', assumptions)}
         />
       </div>
     </div>
@@ -661,10 +697,10 @@ export function EditableTestCases({
         ? {
             ...current,
             cases: current.cases.map((testCase, caseIndex) =>
-              caseIndex === index ? updater(testCase) : testCase,
+              caseIndex === index ? updater(testCase) : testCase
             ),
           }
-        : current,
+        : current
     );
   }
 
@@ -684,7 +720,7 @@ export function EditableTestCases({
               onChange={(event) =>
                 updateCase(index, (current) => ({
                   ...current,
-                  caseType: event.target.value as GeneratedTestCase["caseType"],
+                  caseType: event.target.value as GeneratedTestCase['caseType'],
                 }))
               }
             >
@@ -702,7 +738,7 @@ export function EditableTestCases({
               onChange={(event) =>
                 updateCase(index, (current) => ({
                   ...current,
-                  priority: event.target.value as GeneratedTestCase["priority"],
+                  priority: event.target.value as GeneratedTestCase['priority'],
                 }))
               }
             >
@@ -763,7 +799,11 @@ function EditableStringList({
                 value={item}
                 rows={2}
                 onChange={(event) =>
-                  onChange(items.map((existing, itemIndex) => (itemIndex === index ? event.target.value : existing)))
+                  onChange(
+                    items.map((existing, itemIndex) =>
+                      itemIndex === index ? event.target.value : existing
+                    )
+                  )
                 }
               />
               <button
@@ -778,7 +818,7 @@ function EditableStringList({
         ) : (
           <p className="meta">No items yet.</p>
         )}
-        <button className="button ghost" type="button" onClick={() => onChange([...items, ""])}>
+        <button className="button ghost" type="button" onClick={() => onChange([...items, ''])}>
           Add Line
         </button>
       </div>
@@ -798,7 +838,11 @@ function InlineField({
   return (
     <label className="inline-editor">
       <span className="info-label">{label}</span>
-      <input className="inline-input" value={value} onChange={(event) => onChange(event.target.value)} />
+      <input
+        className="inline-input"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </label>
   );
 }
@@ -840,7 +884,7 @@ export function BugReportCard({
   onEdit?: () => void;
 }) {
   return (
-    <article className={`feature-card ${compact ? "compact" : ""}`}>
+    <article className={`feature-card ${compact ? 'compact' : ''}`}>
       <div className="card-header-inline">
         <h4>{report.title}</h4>
         <span className="severity-pill">{report.severity}</span>
@@ -876,7 +920,7 @@ export function TestCaseBatchCard({
   onEdit?: () => void;
 }) {
   return (
-    <article className={`feature-card ${compact ? "compact" : ""}`}>
+    <article className={`feature-card ${compact ? 'compact' : ''}`}>
       <div className="card-header-inline">
         <h4>{batch.featureTitle}</h4>
         <span className="meta-chip">{batch.generationMode}</span>
@@ -939,8 +983,8 @@ export function SourceMaterialList({
             </div>
             <span className="meta-chip">{attachment.kind}</span>
           </div>
-          {attachment.kind === "TEXT" ? (
-            <p className="meta-line">{truncatePreview(attachment.textContent ?? "", 220)}</p>
+          {attachment.kind === 'TEXT' ? (
+            <p className="meta-line">{truncatePreview(attachment.textContent ?? '', 220)}</p>
           ) : (
             <p className="meta-line">Image reference ready for visual test generation.</p>
           )}
@@ -966,13 +1010,13 @@ export function Field({
   onChange: (value: string) => void;
   readOnly?: boolean;
 }) {
-  const id = label.toLowerCase().replace(/\s+/g, "-");
+  const id = label.toLowerCase().replace(/\s+/g, '-');
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
       <input
         id={id}
-        value={value ?? ""}
+        value={value ?? ''}
         readOnly={readOnly}
         onChange={(event) => onChange(event.target.value)}
       />
@@ -989,38 +1033,38 @@ export function TextAreaField({
   value?: string;
   onChange: (value: string) => void;
 }) {
-  const id = label.toLowerCase().replace(/\s+/g, "-");
+  const id = label.toLowerCase().replace(/\s+/g, '-');
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <textarea id={id} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      <textarea id={id} value={value ?? ''} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }
 
 function formatShortDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
+    month: 'short',
+    day: 'numeric',
   });
 }
 
 function formatLongDate(value: string) {
   return new Date(value).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }
 
 export async function parseSourceAttachment(file: File): Promise<TestCaseSourceAttachment> {
-  if (file.type.startsWith("image/")) {
+  if (file.type.startsWith('image/')) {
     return {
       id: `${file.name}-${file.lastModified}`,
       name: file.name,
-      mimeType: file.type || "image/*",
-      kind: "IMAGE",
+      mimeType: file.type || 'image/*',
+      kind: 'IMAGE',
       imageDataUrl: await readFileAsDataUrl(file),
     };
   }
@@ -1032,50 +1076,50 @@ export async function parseSourceAttachment(file: File): Promise<TestCaseSourceA
       id: `${file.name}-${file.lastModified}`,
       name: file.name,
       mimeType: file.type || detectMimeFromName(file.name),
-      kind: "TEXT",
+      kind: 'TEXT',
       textContent,
     };
   }
 
   throw new Error(
-    `Unsupported file "${file.name}". Use an image or a text-based doc like TXT, MD, CSV, JSON, HTML, XML, LOG, or RTF.`,
+    `Unsupported file "${file.name}". Use an image or a text-based doc like TXT, MD, CSV, JSON, HTML, XML, LOG, or RTF.`
   );
 }
 
 function isSupportedTextFile(file: File) {
   const normalizedType = file.type.toLowerCase();
-  const extension = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() : "";
+  const extension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : '';
 
   return (
-    normalizedType.startsWith("text/") ||
-    normalizedType.includes("json") ||
-    normalizedType.includes("xml") ||
-    normalizedType.includes("rtf") ||
-    ["txt", "md", "csv", "json", "html", "htm", "xml", "log", "rtf"].includes(extension ?? "")
+    normalizedType.startsWith('text/') ||
+    normalizedType.includes('json') ||
+    normalizedType.includes('xml') ||
+    normalizedType.includes('rtf') ||
+    ['txt', 'md', 'csv', 'json', 'html', 'htm', 'xml', 'log', 'rtf'].includes(extension ?? '')
   );
 }
 
 function detectMimeFromName(name: string) {
-  const extension = name.includes(".") ? name.split(".").pop()?.toLowerCase() : "";
+  const extension = name.includes('.') ? name.split('.').pop()?.toLowerCase() : '';
 
   switch (extension) {
-    case "md":
-      return "text/markdown";
-    case "csv":
-      return "text/csv";
-    case "json":
-      return "application/json";
-    case "html":
-    case "htm":
-      return "text/html";
-    case "xml":
-      return "application/xml";
-    case "log":
-      return "text/plain";
-    case "rtf":
-      return "application/rtf";
+    case 'md':
+      return 'text/markdown';
+    case 'csv':
+      return 'text/csv';
+    case 'json':
+      return 'application/json';
+    case 'html':
+    case 'htm':
+      return 'text/html';
+    case 'xml':
+      return 'application/xml';
+    case 'log':
+      return 'text/plain';
+    case 'rtf':
+      return 'application/rtf';
     default:
-      return "text/plain";
+      return 'text/plain';
   }
 }
 
@@ -1084,7 +1128,7 @@ function readFileAsDataUrl(file: File) {
     const reader = new FileReader();
 
     reader.onload = () => {
-      if (typeof reader.result === "string") {
+      if (typeof reader.result === 'string') {
         resolve(reader.result);
         return;
       }
@@ -1117,7 +1161,7 @@ export function useWorkspace() {
   const context = useContext(WorkspaceContext);
 
   if (!context) {
-    throw new Error("useWorkspace must be used within a WorkspaceProvider.");
+    throw new Error('useWorkspace must be used within a WorkspaceProvider.');
   }
 
   return context;
