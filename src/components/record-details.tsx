@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { BugReportExportActions } from "@/components/bug-report-export-actions";
+import { TestCaseExportActions } from "@/components/test-case-export-actions";
 import type { SavedBugReportDto, SavedTestCaseBatchDto } from "@/types/api";
 
 export function BugReportDetailView({ report }: { report: SavedBugReportDto }) {
@@ -22,6 +24,7 @@ export function BugReportDetailView({ report }: { report: SavedBugReportDto }) {
             Open Projects
           </Link>
         </div>
+        <BugReportExportActions report={report} fileStem={report.title} />
       </section>
 
       <section className="content-grid">
@@ -107,6 +110,7 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
             Open Projects
           </Link>
         </div>
+        <TestCaseExportActions batch={batch} fileStem={batch.featureTitle} />
       </section>
 
       <section className="content-grid">
@@ -119,6 +123,7 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
           </div>
           <InfoBlock title="Requirement" body={batch.sourceRequirement} />
           <InfoBlock title="Acceptance Criteria" body={batch.acceptanceCriteria ?? "Not specified"} />
+          <InfoBlock title="QA Context Notes" body={batch.contextNotes ?? "Not specified"} />
         </section>
 
         <section className="panel">
@@ -131,9 +136,37 @@ export function TestCaseBatchDetailView({ batch }: { batch: SavedTestCaseBatchDt
           <div className="detail-grid">
             <InfoBlock title="Generation Mode" body={batch.generationMode} />
             <InfoBlock title="Case Count" body={String(batch.cases.length)} />
+            <InfoBlock title="AI Provider" body={batch.provider ?? "Not captured"} />
           </div>
         </section>
       </section>
+
+      {batch.sourceMaterials?.length ? (
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Source Material</p>
+              <h3>Saved requirement inputs</h3>
+            </div>
+          </div>
+          <div className="stack">
+            {batch.sourceMaterials.map((attachment) => (
+              <article key={attachment.id} className="feature-card compact">
+                <div className="card-header-inline">
+                  <h4>{attachment.name}</h4>
+                  <span className="meta-chip">{attachment.kind}</span>
+                </div>
+                <p className="meta-line">{attachment.mimeType}</p>
+                <p className="meta-line">
+                  {attachment.kind === "TEXT"
+                    ? truncateSourcePreview(attachment.textContent ?? "")
+                    : "Image reference saved with this batch."}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel">
         <div className="panel-heading">
@@ -182,4 +215,8 @@ function InfoBlock({ title, body }: { title: string; body: string }) {
       <p>{body}</p>
     </div>
   );
+}
+
+function truncateSourcePreview(value: string) {
+  return value.length > 220 ? `${value.slice(0, 220)}...` : value || "No preview available.";
 }

@@ -6,13 +6,29 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useState,
   useTransition,
   type ReactNode,
 } from "react";
 
+import { BugReportExportActions } from "@/components/bug-report-export-actions";
+import { TestCaseExportActions } from "@/components/test-case-export-actions";
+import {
+  defaultBugDraft,
+  defaultProjectDraft,
+  defaultSettingsDraft,
+  defaultTestCaseDraft,
+  type BugDraft,
+  type SettingsDraft,
+  type TestCaseDraft,
+} from "@/components/workspace-model";
+import { useBugGenerator } from "@/hooks/useBugGenerator";
+import { useProjects } from "@/hooks/useProjects";
+import { useTestGenerator } from "@/hooks/useTestGenerator";
+import { getApiErrorMessage } from "@/lib/api/client";
 import type {
+  AIProvider,
+  AIProviderOption,
   CreateProjectRequest,
   GeneratedTestCase,
   GenerateBugReportResponse,
@@ -21,41 +37,26 @@ import type {
   ProjectDto,
   SavedBugReportDto,
   SavedTestCaseBatchDto,
+  TestCaseSourceAttachment,
+  UserSettingsDto,
 } from "@/types/api";
 
-const defaultBugDraft = {
-  rawInput:
-    "After resetting password, the login spinner keeps running in Chrome and the user never reaches the dashboard.",
-  expectedInput: "User should log in successfully after password reset.",
-  actualInput: "The login button shows a spinner forever and no redirect happens.",
-  environmentInput: "Chrome 124 on Windows 11, staging environment",
-  logsInput: "Console shows a 401 response from /api/session/refresh",
-};
-
-const defaultTestCaseDraft = {
-  featureTitle: "Password Reset with OTP",
-  sourceRequirement:
-    "As a user, I want to reset my password using an OTP sent to my email so I can regain account access securely.",
-  acceptanceCriteria:
-    "OTP expires in 5 minutes, users can resend OTP after 30 seconds, and password must meet complexity rules.",
-  generationMode: "REGRESSION",
-};
-
-const defaultProjectDraft: CreateProjectRequest = {
-  name: "Checkout Revamp",
-  description: "QA workspace for exploratory bugs and regression coverage.",
-};
-
 type WorkspaceContextValue = {
+  availableProviders: AIProviderOption[];
+  selectedProvider: AIProvider | "";
+  setSelectedProvider: React.Dispatch<React.SetStateAction<AIProvider | "">>;
+  userSettings: UserSettingsDto | null;
+  settingsDraft: SettingsDraft;
+  setSettingsDraft: React.Dispatch<React.SetStateAction<SettingsDraft>>;
   projects: ProjectDto[];
   selectedProjectId: string;
   projectDetail: ProjectDetailDto | null;
   projectDraft: CreateProjectRequest;
   setProjectDraft: React.Dispatch<React.SetStateAction<CreateProjectRequest>>;
-  bugDraft: typeof defaultBugDraft;
-  setBugDraft: React.Dispatch<React.SetStateAction<typeof defaultBugDraft>>;
-  testCaseDraft: typeof defaultTestCaseDraft;
-  setTestCaseDraft: React.Dispatch<React.SetStateAction<typeof defaultTestCaseDraft>>;
+  bugDraft: BugDraft;
+  setBugDraft: React.Dispatch<React.SetStateAction<BugDraft>>;
+  testCaseDraft: TestCaseDraft;
+  setTestCaseDraft: React.Dispatch<React.SetStateAction<TestCaseDraft>>;
   bugOutput: GenerateBugReportResponse | null;
   setBugOutput: React.Dispatch<React.SetStateAction<GenerateBugReportResponse | null>>;
   bugDraftDirty: boolean;
@@ -74,6 +75,7 @@ type WorkspaceContextValue = {
   isTestPending: boolean;
   isSavingBug: boolean;
   isSavingCases: boolean;
+  isSavingSettings: boolean;
   metrics: {
     totalProjects: number;
     totalBugReports: number;
@@ -92,355 +94,162 @@ type WorkspaceContextValue = {
   resetTestOutput: () => void;
   loadSavedTestCaseBatch: (batch: SavedTestCaseBatchDto) => void;
   saveTestCases: () => Promise<void>;
+  saveSettings: () => Promise<void>;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [projects, setProjects] = useState<ProjectDto[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-  const [projectDetail, setProjectDetail] = useState<ProjectDetailDto | null>(null);
-  const [projectDraft, setProjectDraft] = useState<CreateProjectRequest>(defaultProjectDraft);
-  const [bugDraft, setBugDraft] = useState(defaultBugDraft);
-  const [testCaseDraft, setTestCaseDraft] = useState(defaultTestCaseDraft);
-  const [bugOutput, setBugOutput] = useState<GenerateBugReportResponse | null>(null);
-  const [generatedBugSnapshot, setGeneratedBugSnapshot] = useState<GenerateBugReportResponse | null>(null);
-  const [editingBugReportId, setEditingBugReportId] = useState<string | null>(null);
-  const [testOutput, setTestOutput] = useState<GenerateTestCasesResponse | null>(null);
-  const [generatedTestSnapshot, setGeneratedTestSnapshot] = useState<GenerateTestCasesResponse | null>(null);
-  const [editingTestCaseBatchId, setEditingTestCaseBatchId] = useState<string | null>(null);
-  const [bugError, setBugError] = useState<string | null>(null);
-  const [testError, setTestError] = useState<string | null>(null);
-  const [projectError, setProjectError] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [isBootstrapping, startBootstrapTransition] = useTransition();
-  const [isProjectPending, startProjectTransition] = useTransition();
-  const [isBugPending, startBugTransition] = useTransition();
-  const [isTestPending, startTestTransition] = useTransition();
-  const [isSavingBug, startSaveBugTransition] = useTransition();
-  const [isSavingCases, startSaveCasesTransition] = useTransition();
+  const [availableProviders, setAvailableProviders] = useState<AIProviderOption[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider | "">("");
+  const [userSettings, setUserSettings] = useState<UserSettingsDto | null>(null);
+  const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(defaultSettingsDraft);
+  const [isSavingSettings, startSaveSettingsTransition] = useTransition();
+
+  const {
+    projects,
+    selectedProjectId,
+    projectDetail,
+    projectDraft,
+    setProjectDraft,
+    projectError,
+    setProjectError,
+    saveMessage,
+    setSaveMessage,
+    isBootstrapping,
+    startBootstrapTransition,
+    isProjectPending,
+    metrics,
+    setSelectedProjectId,
+    refreshProjects,
+    refreshProjectDetail,
+    createProject,
+  } = useProjects({
+    defaultProjectDraft,
+  });
+
+  const {
+    bugDraft,
+    setBugDraft,
+    bugOutput,
+    setBugOutput,
+    bugDraftDirty,
+    editingBugReportId,
+    bugError,
+    isBugPending,
+    isSavingBug,
+    submitBugReport,
+    regenerateBugReport,
+    resetBugOutput,
+    loadSavedBugReport,
+    saveBugReport,
+  } = useBugGenerator({
+    defaultBugDraft,
+    selectedProjectId,
+    selectedProvider,
+    refreshProjectDetail,
+    setSelectedProjectId,
+    setSaveMessage,
+  });
+
+  const {
+    testCaseDraft,
+    setTestCaseDraft,
+    testOutput,
+    setTestOutput,
+    testDraftDirty,
+    editingTestCaseBatchId,
+    testError,
+    isTestPending,
+    isSavingCases,
+    submitTestCases,
+    regenerateTestCases,
+    resetTestOutput,
+    loadSavedTestCaseBatch,
+    saveTestCases,
+  } = useTestGenerator({
+    defaultTestCaseDraft,
+    selectedProjectId,
+    selectedProvider,
+    refreshProjectDetail,
+    setSelectedProjectId,
+    setSelectedProvider,
+    setSaveMessage,
+  });
 
   useEffect(() => {
     startBootstrapTransition(async () => {
+      await refreshUserSettings();
+      await refreshProviders();
       await refreshProjects();
     });
   }, []);
 
   useEffect(() => {
-    if (!selectedProjectId) {
-      setProjectDetail(null);
+    if (!availableProviders.length) {
       return;
     }
 
-    startBootstrapTransition(async () => {
-      await refreshProjectDetail(selectedProjectId);
-    });
-  }, [selectedProjectId]);
+    setSelectedProvider((current) =>
+      current && availableProviders.some((provider) => provider.id === current)
+        ? current
+        : userSettings?.preferredProvider && availableProviders.some((provider) => provider.id === userSettings.preferredProvider)
+          ? userSettings.preferredProvider
+          : (availableProviders[0]?.id ?? ""),
+    );
+  }, [availableProviders, userSettings?.preferredProvider]);
 
-  const metrics = useMemo(() => {
-    const totalProjects = projects.length;
-    const totalBugReports = projectDetail?.bugReports.length ?? 0;
-    const totalTestCases =
-      projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ?? 0;
-    const releaseSignal =
-      totalBugReports === 0 ? "Quiet build" : totalBugReports <= 2 ? "Watchlist" : "Needs review";
-
-    return { totalProjects, totalBugReports, totalTestCases, releaseSignal };
-  }, [projectDetail, projects]);
-
-  const bugDraftDirty = useMemo(
-    () => JSON.stringify(bugOutput) !== JSON.stringify(generatedBugSnapshot),
-    [bugOutput, generatedBugSnapshot],
-  );
-
-  const testDraftDirty = useMemo(
-    () => JSON.stringify(testOutput) !== JSON.stringify(generatedTestSnapshot),
-    [testOutput, generatedTestSnapshot],
-  );
-
-  async function refreshProjects(nextProjectId?: string) {
-    const response = await fetch("/api/projects", { cache: "no-store" });
+  async function refreshProviders() {
+    const response = await fetch("/api/ai/providers", { cache: "no-store" });
     const data = await response.json();
 
     if (!response.ok) {
-      setProjectError(data?.error?.message ?? "Unable to load projects.");
       return;
     }
 
-    const projectList = data as ProjectDto[];
-    setProjects(projectList);
-
-    const preferredProjectId =
-      nextProjectId ??
-      (projectList.some((project) => project.id === selectedProjectId)
-        ? selectedProjectId
-        : projectList[0]?.id ?? "");
-
-    setSelectedProjectId(preferredProjectId);
-    setProjectError(null);
+    const providers = data as AIProviderOption[];
+    setAvailableProviders(providers);
   }
 
-  async function refreshProjectDetail(projectId: string) {
-    const response = await fetch(`/api/projects/${projectId}`, { cache: "no-store" });
+  async function refreshUserSettings() {
+    const response = await fetch("/api/settings/profile", { cache: "no-store" });
     const data = await response.json();
 
     if (!response.ok) {
-      setProjectError(data?.error?.message ?? "Unable to load project details.");
       return;
     }
 
-    setProjectDetail(data as ProjectDetailDto);
+    const profile = data as UserSettingsDto;
+    setUserSettings(profile);
+    setSettingsDraft({
+      name: profile.name ?? "",
+      preferredProvider: profile.preferredProvider ?? "",
+    });
+  }
+
+  async function saveSettings() {
+    setSaveMessage(null);
     setProjectError(null);
-  }
-
-  async function createProject() {
-    setProjectError(null);
-    setSaveMessage(null);
 
     return new Promise<void>((resolve) => {
-      startProjectTransition(async () => {
-        const response = await fetch("/api/projects", {
-          method: "POST",
+      startSaveSettingsTransition(async () => {
+        const response = await fetch("/api/settings/profile", {
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(projectDraft),
+          body: JSON.stringify(settingsDraft),
         });
         const data = await response.json();
 
         if (!response.ok) {
-          setProjectError(data?.error?.message ?? "Unable to create project.");
+          setProjectError(getApiErrorMessage(data, "Unable to save settings."));
           resolve();
           return;
         }
 
-        const project = data as ProjectDto;
-        await refreshProjects(project.id);
-        await refreshProjectDetail(project.id);
-        setSaveMessage(`Project "${project.name}" created.`);
-        resolve();
-      });
-    });
-  }
-
-  async function submitBugReport() {
-    if (!selectedProjectId) {
-      setBugError("Create or select a project before generating.");
-      return;
-    }
-
-    setBugError(null);
-    setSaveMessage(null);
-
-    return new Promise<void>((resolve) => {
-      startBugTransition(async () => {
-        const response = await fetch("/api/bug-reports/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...bugDraft, projectId: selectedProjectId }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setBugOutput(null);
-          setGeneratedBugSnapshot(null);
-          setBugError(data?.error?.message ?? "Bug report generation failed.");
-          resolve();
-          return;
-        }
-
-        setBugOutput(data);
-        setGeneratedBugSnapshot(data);
-        setEditingBugReportId(null);
-        resolve();
-      });
-    });
-  }
-
-  async function regenerateBugReport() {
-    await submitBugReport();
-  }
-
-  function resetBugOutput() {
-    setBugOutput(generatedBugSnapshot);
-  }
-
-  function loadSavedBugReport(report: SavedBugReportDto) {
-    setSelectedProjectId(report.projectId);
-    setBugDraft({
-      rawInput: report.rawInput,
-      expectedInput: report.expectedInput ?? "",
-      actualInput: report.actualInput ?? "",
-      environmentInput: report.environmentInput ?? "",
-      logsInput: report.logsInput ?? "",
-    });
-
-    const output: GenerateBugReportResponse = {
-      title: report.title,
-      summary: report.summary,
-      stepsToReproduce: report.stepsToReproduce,
-      expectedResult: report.expectedResult,
-      actualResult: report.actualResult,
-      severity: report.severity,
-      priority: report.priority ?? undefined,
-      environmentSummary: report.environmentSummary ?? undefined,
-      assumptions: report.assumptions,
-      confidenceScore: report.confidenceScore,
-    };
-
-    setBugOutput(output);
-    setGeneratedBugSnapshot(output);
-    setEditingBugReportId(report.id);
-  }
-
-  async function saveBugReport() {
-    if (!selectedProjectId || !bugOutput) {
-      setBugError("Generate a bug report before saving.");
-      return;
-    }
-
-    setBugError(null);
-    setSaveMessage(null);
-
-    return new Promise<void>((resolve) => {
-      startSaveBugTransition(async () => {
-        const response = await fetch(editingBugReportId ? `/api/bug-reports/${editingBugReportId}` : "/api/bug-reports", {
-          method: editingBugReportId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...bugDraft,
-            ...bugOutput,
-            projectId: selectedProjectId,
-          }),
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          setBugError(data?.error?.message ?? "Unable to save bug report.");
-          resolve();
-          return;
-        }
-
-        await refreshProjectDetail(selectedProjectId);
-        setEditingBugReportId((data as SavedBugReportDto).id);
-        setGeneratedBugSnapshot({
-          title: (data as SavedBugReportDto).title,
-          summary: (data as SavedBugReportDto).summary,
-          stepsToReproduce: (data as SavedBugReportDto).stepsToReproduce,
-          expectedResult: (data as SavedBugReportDto).expectedResult,
-          actualResult: (data as SavedBugReportDto).actualResult,
-          severity: (data as SavedBugReportDto).severity,
-          priority: (data as SavedBugReportDto).priority ?? undefined,
-          environmentSummary: (data as SavedBugReportDto).environmentSummary ?? undefined,
-          assumptions: (data as SavedBugReportDto).assumptions,
-          confidenceScore: (data as SavedBugReportDto).confidenceScore,
-        });
-        setSaveMessage(
-          `${editingBugReportId ? "Updated" : "Saved"} bug report "${(data as SavedBugReportDto).title}".`,
-        );
-        resolve();
-      });
-    });
-  }
-
-  async function submitTestCases() {
-    if (!selectedProjectId) {
-      setTestError("Create or select a project before generating.");
-      return;
-    }
-
-    setTestError(null);
-    setSaveMessage(null);
-
-    return new Promise<void>((resolve) => {
-      startTestTransition(async () => {
-        const response = await fetch("/api/test-cases/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...testCaseDraft, projectId: selectedProjectId }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setTestOutput(null);
-          setGeneratedTestSnapshot(null);
-          setTestError(data?.error?.message ?? "Test case generation failed.");
-          resolve();
-          return;
-        }
-
-        setTestOutput(data);
-        setGeneratedTestSnapshot(data);
-        setEditingTestCaseBatchId(null);
-        resolve();
-      });
-    });
-  }
-
-  async function regenerateTestCases() {
-    await submitTestCases();
-  }
-
-  function resetTestOutput() {
-    setTestOutput(generatedTestSnapshot);
-  }
-
-  function loadSavedTestCaseBatch(batch: SavedTestCaseBatchDto) {
-    setSelectedProjectId(batch.projectId);
-    setTestCaseDraft({
-      featureTitle: batch.featureTitle,
-      sourceRequirement: batch.sourceRequirement,
-      acceptanceCriteria: batch.acceptanceCriteria ?? "",
-      generationMode: batch.generationMode,
-    });
-
-    const output: GenerateTestCasesResponse = {
-      cases: batch.cases,
-    };
-
-    setTestOutput(output);
-    setGeneratedTestSnapshot(output);
-    setEditingTestCaseBatchId(batch.id);
-  }
-
-  async function saveTestCases() {
-    if (!selectedProjectId || !testOutput) {
-      setTestError("Generate test cases before saving.");
-      return;
-    }
-
-    setTestError(null);
-    setSaveMessage(null);
-
-    return new Promise<void>((resolve) => {
-      startSaveCasesTransition(async () => {
-        const response = await fetch(
-          editingTestCaseBatchId ? `/api/test-cases/${editingTestCaseBatchId}` : "/api/test-cases",
-          {
-          method: editingTestCaseBatchId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...testCaseDraft,
-            projectId: selectedProjectId,
-            cases: testOutput.cases,
-          }),
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          setTestError(data?.error?.message ?? "Unable to save test cases.");
-          resolve();
-          return;
-        }
-
-        await refreshProjectDetail(selectedProjectId);
-        setEditingTestCaseBatchId((data as SavedTestCaseBatchDto).id);
-        setGeneratedTestSnapshot({
-          cases: (data as SavedTestCaseBatchDto).cases,
-        });
-        setSaveMessage(
-          `${editingTestCaseBatchId ? "Updated" : "Saved"} ${(data as SavedTestCaseBatchDto).cases.length} test cases for "${(data as SavedTestCaseBatchDto).featureTitle}".`,
-        );
+        const profile = data as UserSettingsDto;
+        setUserSettings(profile);
+        setSelectedProvider(profile.preferredProvider ?? selectedProvider);
+        setSaveMessage("Settings saved.");
         resolve();
       });
     });
@@ -449,6 +258,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   return (
     <WorkspaceContext.Provider
       value={{
+        availableProviders,
+        selectedProvider,
+        setSelectedProvider,
+        userSettings,
+        settingsDraft,
+        setSettingsDraft,
         projects,
         selectedProjectId,
         projectDetail,
@@ -476,6 +291,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         isTestPending,
         isSavingBug,
         isSavingCases,
+        isSavingSettings,
         metrics,
         setSelectedProjectId,
         createProject,
@@ -489,6 +305,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         resetTestOutput,
         loadSavedTestCaseBatch,
         saveTestCases,
+        saveSettings,
       }}
     >
       {children}
@@ -496,9 +313,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function WorkspaceShell({ children }: { children: ReactNode }) {
+export function WorkspaceShell({
+  children,
+  userLabel,
+  signOutAction,
+}: {
+  children: ReactNode;
+  userLabel: string;
+  signOutAction: () => Promise<void>;
+}) {
   const pathname = usePathname();
   const workspace = useWorkspace();
+  const activeProvider =
+    workspace.availableProviders.find((provider) => provider.id === workspace.selectedProvider) ?? null;
 
   return (
     <div className="dashboard-shell">
@@ -507,9 +334,46 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <p className="eyebrow">QA Copilot</p>
           <h1>AI workspace for bug reports and test design</h1>
         </div>
-        <div className="topbar-status">
-          <span className="signal-dot" />
-          <span>{workspace.isBootstrapping ? "Syncing workspace" : "Workspace live"}</span>
+        <div className="topbar-actions">
+          <div className="provider-strip">
+            <div className="field compact-field">
+              <label htmlFor="workspace-provider">AI provider</label>
+              <select
+                id="workspace-provider"
+                value={workspace.selectedProvider}
+                onChange={(event) =>
+                  workspace.setSelectedProvider(event.target.value as AIProvider | "")
+                }
+              >
+                {workspace.availableProviders.length ? (
+                  workspace.availableProviders.map((provider) => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.label} · {provider.model}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No provider configured</option>
+                )}
+              </select>
+            </div>
+            <p className="meta-line">
+              {activeProvider
+                ? `Using ${activeProvider.label} with ${activeProvider.model}`
+                : "Add an AI provider key in .env.local to enable generation."}
+            </p>
+          </div>
+          <div className="topbar-status">
+            <span className="signal-dot" />
+            <span>{workspace.isBootstrapping ? "Syncing workspace" : "Workspace live"}</span>
+          </div>
+          <form action={signOutAction}>
+            <div className="topbar-user">
+              <span>{userLabel}</span>
+              <button className="button ghost" type="submit">
+                Sign Out
+              </button>
+            </div>
+          </form>
         </div>
       </header>
 
@@ -549,6 +413,9 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         <NavLink href="/test-cases" active={pathname === "/test-cases"}>
           Test Cases
         </NavLink>
+        <NavLink href="/settings" active={pathname === "/settings"}>
+          Settings
+        </NavLink>
       </nav>
 
       <div className="workspace-grid">
@@ -561,467 +428,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function DashboardPage() {
-  const { projectDetail } = useWorkspace();
-
-  return (
-    <>
-      <ActiveWorkspacePanel />
-      <section className="content-grid">
-        <section className="panel">
-          <SectionHeader eyebrow="Recent Bugs" title="Saved defect trail" />
-          {projectDetail?.bugReports.length ? (
-            <div className="stack">
-              {projectDetail.bugReports.slice(0, 4).map((report) => (
-                <BugReportCard key={report.id} report={report} compact />
-              ))}
-            </div>
-          ) : (
-            <EmptyState text="No saved bug reports yet for this project." />
-          )}
-        </section>
-
-        <section className="panel">
-          <SectionHeader eyebrow="Recent Cases" title="Coverage snapshots" />
-          {projectDetail?.testCaseBatches.length ? (
-            <div className="stack">
-              {projectDetail.testCaseBatches.slice(0, 4).map((batch) => (
-                <TestCaseBatchCard key={batch.id} batch={batch} compact />
-              ))}
-            </div>
-          ) : (
-            <EmptyState text="No saved test-case batches yet for this project." />
-          )}
-        </section>
-      </section>
-    </>
-  );
-}
-
-export function ProjectsPage() {
-  const {
-    projects,
-    projectDetail,
-    projectDraft,
-    setProjectDraft,
-    createProject,
-    isProjectPending,
-    projectError,
-    saveMessage,
-  } = useWorkspace();
-
-  return (
-    <section className="content-grid">
-      <section className="panel">
-        <SectionHeader eyebrow="Project Control" title="Create and manage workspaces" />
-        <div className="stack">
-          <Field
-            label="Project name"
-            value={projectDraft.name}
-            onChange={(value) => setProjectDraft((current) => ({ ...current, name: value }))}
-          />
-          <TextAreaField
-            label="Project description"
-            value={projectDraft.description}
-            onChange={(value) => setProjectDraft((current) => ({ ...current, description: value }))}
-          />
-          <div className="button-row">
-            <button className="button" type="button" onClick={createProject} disabled={isProjectPending}>
-              {isProjectPending ? "Creating..." : "Create Project"}
-            </button>
-            <span className="meta">{projects.length} project(s) available</span>
-          </div>
-          {projectError ? <p className="meta error-text">{projectError}</p> : null}
-          {saveMessage ? <p className="meta success-text">{saveMessage}</p> : null}
-        </div>
-      </section>
-
-      <section className="panel">
-        <SectionHeader eyebrow="Selected Project" title={projectDetail?.name ?? "No project selected"} />
-        <p className="panel-lead">
-          {projectDetail?.description ??
-            "Pick a project from the sidebar to review its saved bug reports and test-case batches."}
-        </p>
-        <div className="overview-grid">
-          <SummaryTile
-            label="Saved bugs"
-            value={String(projectDetail?.bugReports.length ?? 0)}
-            helper="Structured defect records stored here"
-          />
-          <SummaryTile
-            label="Saved batches"
-            value={String(projectDetail?.testCaseBatches.length ?? 0)}
-            helper="Grouped test-case generation runs"
-          />
-          <SummaryTile
-            label="Coverage volume"
-            value={String(
-              projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ?? 0,
-            )}
-            helper="Total generated cases in this workspace"
-          />
-        </div>
-      </section>
-    </section>
-  );
-}
-
-export function BugReportsPage() {
-  const {
-    bugDraft,
-    setBugDraft,
-    bugOutput,
-    setBugOutput,
-    bugDraftDirty,
-    editingBugReportId,
-    bugError,
-    isBugPending,
-    isSavingBug,
-    submitBugReport,
-    regenerateBugReport,
-    resetBugOutput,
-    loadSavedBugReport,
-    saveBugReport,
-    projectDetail,
-  } = useWorkspace();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [severityFilter, setSeverityFilter] = useState<"ALL" | GenerateBugReportResponse["severity"]>("ALL");
-
-  const filteredBugReports = useMemo(() => {
-    const reports = projectDetail?.bugReports ?? [];
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    return reports.filter((report) => {
-      const matchesSeverity = severityFilter === "ALL" || report.severity === severityFilter;
-      const matchesQuery =
-        !normalizedQuery ||
-        report.title.toLowerCase().includes(normalizedQuery) ||
-        report.summary.toLowerCase().includes(normalizedQuery) ||
-        report.actualResult.toLowerCase().includes(normalizedQuery) ||
-        report.expectedResult.toLowerCase().includes(normalizedQuery);
-
-      return matchesSeverity && matchesQuery;
-    });
-  }, [projectDetail?.bugReports, searchQuery, severityFilter]);
-
-  return (
-    <>
-      <ActiveWorkspacePanel />
-      <section className="content-grid">
-        <section className="panel">
-          <SectionHeader eyebrow="Generator" title="Compose bug input" />
-          <div className="stack">
-            <TextAreaField
-              label="Raw tester notes"
-              value={bugDraft.rawInput}
-              onChange={(value) => setBugDraft((current) => ({ ...current, rawInput: value }))}
-            />
-            <Field
-              label="Expected behavior"
-              value={bugDraft.expectedInput}
-              onChange={(value) => setBugDraft((current) => ({ ...current, expectedInput: value }))}
-            />
-            <Field
-              label="Actual behavior"
-              value={bugDraft.actualInput}
-              onChange={(value) => setBugDraft((current) => ({ ...current, actualInput: value }))}
-            />
-            <Field
-              label="Environment"
-              value={bugDraft.environmentInput}
-              onChange={(value) =>
-                setBugDraft((current) => ({ ...current, environmentInput: value }))
-              }
-            />
-            <TextAreaField
-              label="Logs or console output"
-              value={bugDraft.logsInput}
-              onChange={(value) => setBugDraft((current) => ({ ...current, logsInput: value }))}
-            />
-            <div className="button-row">
-              <button className="button" type="button" onClick={submitBugReport} disabled={isBugPending}>
-                {isBugPending ? "Generating..." : "Generate Bug Report"}
-              </button>
-              <button
-                className="button ghost"
-                type="button"
-                onClick={regenerateBugReport}
-                disabled={isBugPending}
-              >
-                {isBugPending ? "Refreshing..." : "Regenerate"}
-              </button>
-              <button
-                className="button ghost"
-                type="button"
-                onClick={resetBugOutput}
-                disabled={!bugOutput || !bugDraftDirty}
-              >
-                Reset To AI Draft
-              </button>
-              <button
-                className="button secondary"
-                type="button"
-                onClick={saveBugReport}
-                disabled={isSavingBug || !bugOutput}
-              >
-                {isSavingBug ? "Saving..." : editingBugReportId ? "Update Bug Report" : "Save Bug Report"}
-              </button>
-            </div>
-            {bugOutput ? (
-              <p className={`meta ${bugDraftDirty ? "warning-text" : "success-text"}`}>
-                {editingBugReportId
-                  ? bugDraftDirty
-                    ? "Editing a saved bug report with unsaved changes."
-                    : "Loaded saved bug report is in sync."
-                  : bugDraftDirty
-                    ? "Unsaved edits in current bug report draft."
-                    : "Draft matches last AI generation."}
-              </p>
-            ) : null}
-            {bugError ? <p className="meta error-text">{bugError}</p> : null}
-          </div>
-        </section>
-
-        <section className="panel">
-          <SectionHeader eyebrow="Output" title="Structured bug report" />
-          {bugOutput ? (
-            <EditableBugReport report={bugOutput} onChange={setBugOutput} />
-          ) : (
-            <EmptyState text="Generate a bug report to see a structured, readable draft here." />
-          )}
-        </section>
-      </section>
-
-      <section className="panel">
-        <SectionHeader eyebrow="Saved Bug Reports" title="Project memory" />
-        <div className="toolbar-row">
-          <div className="field search-field">
-            <label htmlFor="bug-search">Search saved bug reports</label>
-            <input
-              id="bug-search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search title, summary, expected, actual..."
-            />
-          </div>
-          <div className="field filter-field">
-            <label htmlFor="bug-severity-filter">Severity</label>
-            <select
-              id="bug-severity-filter"
-              value={severityFilter}
-              onChange={(event) =>
-                setSeverityFilter(event.target.value as "ALL" | GenerateBugReportResponse["severity"])
-              }
-            >
-              <option value="ALL">All severities</option>
-              <option value="LOW">LOW</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="HIGH">HIGH</option>
-              <option value="CRITICAL">CRITICAL</option>
-            </select>
-          </div>
-        </div>
-        {filteredBugReports.length ? (
-          <div className="stack">
-            {filteredBugReports.map((report) => (
-              <BugReportCard key={report.id} report={report} onEdit={() => loadSavedBugReport(report)} />
-            ))}
-          </div>
-        ) : projectDetail?.bugReports.length ? (
-          <EmptyState text="No saved bug reports match the current search or severity filter." />
-        ) : (
-          <EmptyState text="Saved bug reports will appear here after you persist them." />
-        )}
-      </section>
-    </>
-  );
-}
-
-export function TestCasesPage() {
-  const {
-    testCaseDraft,
-    setTestCaseDraft,
-    testOutput,
-    setTestOutput,
-    testDraftDirty,
-    editingTestCaseBatchId,
-    testError,
-    isTestPending,
-    isSavingCases,
-    submitTestCases,
-    regenerateTestCases,
-    resetTestOutput,
-    loadSavedTestCaseBatch,
-    saveTestCases,
-    projectDetail,
-  } = useWorkspace();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [modeFilter, setModeFilter] = useState<"ALL" | SavedTestCaseBatchDto["generationMode"]>("ALL");
-
-  const filteredBatches = useMemo(() => {
-    const batches = projectDetail?.testCaseBatches ?? [];
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    return batches.filter((batch) => {
-      const matchesMode = modeFilter === "ALL" || batch.generationMode === modeFilter;
-      const matchesQuery =
-        !normalizedQuery ||
-        batch.featureTitle.toLowerCase().includes(normalizedQuery) ||
-        batch.sourceRequirement.toLowerCase().includes(normalizedQuery) ||
-        batch.cases.some(
-          (testCase) =>
-            testCase.title.toLowerCase().includes(normalizedQuery) ||
-            testCase.expectedResult.toLowerCase().includes(normalizedQuery),
-        );
-
-      return matchesMode && matchesQuery;
-    });
-  }, [projectDetail?.testCaseBatches, searchQuery, modeFilter]);
-
-  return (
-    <>
-      <ActiveWorkspacePanel />
-      <section className="content-grid">
-        <section className="panel">
-          <SectionHeader eyebrow="Generator" title="Design coverage input" />
-          <div className="stack">
-            <Field
-              label="Feature title"
-              value={testCaseDraft.featureTitle}
-              onChange={(value) =>
-                setTestCaseDraft((current) => ({ ...current, featureTitle: value }))
-              }
-            />
-            <TextAreaField
-              label="Requirement"
-              value={testCaseDraft.sourceRequirement}
-              onChange={(value) =>
-                setTestCaseDraft((current) => ({ ...current, sourceRequirement: value }))
-              }
-            />
-            <TextAreaField
-              label="Acceptance criteria"
-              value={testCaseDraft.acceptanceCriteria}
-              onChange={(value) =>
-                setTestCaseDraft((current) => ({ ...current, acceptanceCriteria: value }))
-              }
-            />
-            <div className="field">
-              <label htmlFor="generationMode">Generation mode</label>
-              <select
-                id="generationMode"
-                value={testCaseDraft.generationMode}
-                onChange={(event) =>
-                  setTestCaseDraft((current) => ({
-                    ...current,
-                    generationMode: event.target.value,
-                  }))
-                }
-              >
-                <option value="SMOKE">Smoke</option>
-                <option value="REGRESSION">Regression</option>
-                <option value="EDGE_HEAVY">Edge Heavy</option>
-              </select>
-            </div>
-            <div className="button-row">
-              <button className="button" type="button" onClick={submitTestCases} disabled={isTestPending}>
-                {isTestPending ? "Generating..." : "Generate Test Cases"}
-              </button>
-              <button
-                className="button ghost"
-                type="button"
-                onClick={regenerateTestCases}
-                disabled={isTestPending}
-              >
-                {isTestPending ? "Refreshing..." : "Regenerate"}
-              </button>
-              <button
-                className="button ghost"
-                type="button"
-                onClick={resetTestOutput}
-                disabled={!testOutput || !testDraftDirty}
-              >
-                Reset To AI Draft
-              </button>
-              <button
-                className="button secondary"
-                type="button"
-                onClick={saveTestCases}
-                disabled={isSavingCases || !testOutput}
-              >
-                {isSavingCases ? "Saving..." : editingTestCaseBatchId ? "Update Test Cases" : "Save Test Cases"}
-              </button>
-            </div>
-            {testOutput ? (
-              <p className={`meta ${testDraftDirty ? "warning-text" : "success-text"}`}>
-                {editingTestCaseBatchId
-                  ? testDraftDirty
-                    ? "Editing a saved test case batch with unsaved changes."
-                    : "Loaded saved test case batch is in sync."
-                  : testDraftDirty
-                    ? "Unsaved edits in current test case draft."
-                    : "Draft matches last AI generation."}
-              </p>
-            ) : null}
-            {testError ? <p className="meta error-text">{testError}</p> : null}
-          </div>
-        </section>
-
-        <section className="panel">
-          <SectionHeader eyebrow="Output" title="Generated coverage pack" />
-          {testOutput ? (
-            <EditableTestCases output={testOutput} onChange={setTestOutput} />
-          ) : (
-            <EmptyState text="Generate test cases to see a coverage-oriented batch here." />
-          )}
-        </section>
-      </section>
-
-      <section className="panel">
-        <SectionHeader eyebrow="Saved Test Batches" title="Reusable coverage history" />
-        <div className="toolbar-row">
-          <div className="field search-field">
-            <label htmlFor="test-case-search">Search saved test batches</label>
-            <input
-              id="test-case-search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search feature, requirement, or case title..."
-            />
-          </div>
-          <div className="field filter-field">
-            <label htmlFor="test-case-mode-filter">Generation mode</label>
-            <select
-              id="test-case-mode-filter"
-              value={modeFilter}
-              onChange={(event) =>
-                setModeFilter(event.target.value as "ALL" | SavedTestCaseBatchDto["generationMode"])
-              }
-            >
-              <option value="ALL">All modes</option>
-              <option value="SMOKE">SMOKE</option>
-              <option value="REGRESSION">REGRESSION</option>
-              <option value="EDGE_HEAVY">EDGE_HEAVY</option>
-            </select>
-          </div>
-        </div>
-        {filteredBatches.length ? (
-          <div className="stack">
-            {filteredBatches.map((batch) => (
-              <TestCaseBatchCard key={batch.id} batch={batch} onEdit={() => loadSavedTestCaseBatch(batch)} />
-            ))}
-          </div>
-        ) : projectDetail?.testCaseBatches.length ? (
-          <EmptyState text="No saved test case batches match the current search or mode filter." />
-        ) : (
-          <EmptyState text="Saved test-case batches will appear here after you persist them." />
-        )}
-      </section>
-    </>
-  );
-}
-
-function ProjectsSidebar() {
+export function ProjectsSidebar() {
   const { projects, selectedProjectId, setSelectedProjectId, projectError, saveMessage } = useWorkspace();
 
   return (
@@ -1074,7 +481,7 @@ function ProjectsSidebar() {
   );
 }
 
-function ActiveWorkspacePanel() {
+export function ActiveWorkspacePanel() {
   const { projectDetail } = useWorkspace();
 
   return (
@@ -1121,7 +528,7 @@ function NavLink({ href, active, children }: { href: string; active: boolean; ch
   );
 }
 
-function SectionHeader({
+export function SectionHeader({
   eyebrow,
   title,
   trailing,
@@ -1150,7 +557,7 @@ function MetricCard({ label, value, tone = "default" }: { label: string; value: 
   );
 }
 
-function SummaryTile({ label, value, helper }: { label: string; value: string; helper: string }) {
+export function SummaryTile({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <div className="summary-tile">
       <span>{label}</span>
@@ -1160,7 +567,7 @@ function SummaryTile({ label, value, helper }: { label: string; value: string; h
   );
 }
 
-function EditableBugReport({
+export function EditableBugReport({
   report,
   onChange,
 }: {
@@ -1241,7 +648,7 @@ function EditableBugReport({
   );
 }
 
-function EditableTestCases({
+export function EditableTestCases({
   output,
   onChange,
 }: {
@@ -1423,7 +830,7 @@ function InlineArea({
   );
 }
 
-function BugReportCard({
+export function BugReportCard({
   report,
   compact = false,
   onEdit,
@@ -1443,6 +850,7 @@ function BugReportCard({
         <InfoCard title="Expected" body={report.expectedResult} />
         <InfoCard title="Actual" body={report.actualResult} />
       </div>
+      <BugReportExportActions report={report} fileStem={report.title} />
       {onEdit ? (
         <div className="card-actions">
           <Link className="button secondary" href={`/bug-reports/${report.id}`}>
@@ -1458,7 +866,7 @@ function BugReportCard({
   );
 }
 
-function TestCaseBatchCard({
+export function TestCaseBatchCard({
   batch,
   compact = false,
   onEdit,
@@ -1484,6 +892,7 @@ function TestCaseBatchCard({
           </div>
         ))}
       </div>
+      <TestCaseExportActions batch={batch} fileStem={batch.featureTitle} />
       {onEdit ? (
         <div className="card-actions">
           <Link className="button secondary" href={`/test-cases/${batch.id}`}>
@@ -1507,21 +916,71 @@ function InfoCard({ title, body }: { title: string; body: string }) {
   );
 }
 
-function EmptyState({ text }: { text: string }) {
+export function EmptyState({ text }: { text: string }) {
   return <div className="empty-state">{text}</div>;
 }
 
-function Field({ label, value, onChange }: { label: string; value?: string; onChange: (value: string) => void }) {
-  const id = label.toLowerCase().replace(/\s+/g, "-");
+export function SourceMaterialList({
+  attachments,
+  onRemove,
+}: {
+  attachments: TestCaseSourceAttachment[];
+  onRemove: (attachmentId: string) => void;
+}) {
   return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <input id={id} value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+    <div className="stack">
+      <span className="info-label">Attached source material</span>
+      {attachments.map((attachment) => (
+        <article key={attachment.id} className="feature-card compact">
+          <div className="card-header-inline">
+            <div>
+              <h4>{attachment.name}</h4>
+              <p className="meta-line">{attachment.mimeType}</p>
+            </div>
+            <span className="meta-chip">{attachment.kind}</span>
+          </div>
+          {attachment.kind === "TEXT" ? (
+            <p className="meta-line">{truncatePreview(attachment.textContent ?? "", 220)}</p>
+          ) : (
+            <p className="meta-line">Image reference ready for visual test generation.</p>
+          )}
+          <div className="card-actions">
+            <button className="button ghost" type="button" onClick={() => onRemove(attachment.id)}>
+              Remove
+            </button>
+          </div>
+        </article>
+      ))}
     </div>
   );
 }
 
-function TextAreaField({
+export function Field({
+  label,
+  value,
+  onChange,
+  readOnly = false,
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  readOnly?: boolean;
+}) {
+  const id = label.toLowerCase().replace(/\s+/g, "-");
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        value={value ?? ""}
+        readOnly={readOnly}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
+  );
+}
+
+export function TextAreaField({
   label,
   value,
   onChange,
@@ -1553,6 +1012,105 @@ function formatLongDate(value: string) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+export async function parseSourceAttachment(file: File): Promise<TestCaseSourceAttachment> {
+  if (file.type.startsWith("image/")) {
+    return {
+      id: `${file.name}-${file.lastModified}`,
+      name: file.name,
+      mimeType: file.type || "image/*",
+      kind: "IMAGE",
+      imageDataUrl: await readFileAsDataUrl(file),
+    };
+  }
+
+  if (isSupportedTextFile(file)) {
+    const textContent = truncateTextContent(await file.text(), 20000);
+
+    return {
+      id: `${file.name}-${file.lastModified}`,
+      name: file.name,
+      mimeType: file.type || detectMimeFromName(file.name),
+      kind: "TEXT",
+      textContent,
+    };
+  }
+
+  throw new Error(
+    `Unsupported file "${file.name}". Use an image or a text-based doc like TXT, MD, CSV, JSON, HTML, XML, LOG, or RTF.`,
+  );
+}
+
+function isSupportedTextFile(file: File) {
+  const normalizedType = file.type.toLowerCase();
+  const extension = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() : "";
+
+  return (
+    normalizedType.startsWith("text/") ||
+    normalizedType.includes("json") ||
+    normalizedType.includes("xml") ||
+    normalizedType.includes("rtf") ||
+    ["txt", "md", "csv", "json", "html", "htm", "xml", "log", "rtf"].includes(extension ?? "")
+  );
+}
+
+function detectMimeFromName(name: string) {
+  const extension = name.includes(".") ? name.split(".").pop()?.toLowerCase() : "";
+
+  switch (extension) {
+    case "md":
+      return "text/markdown";
+    case "csv":
+      return "text/csv";
+    case "json":
+      return "application/json";
+    case "html":
+    case "htm":
+      return "text/html";
+    case "xml":
+      return "application/xml";
+    case "log":
+      return "text/plain";
+    case "rtf":
+      return "application/rtf";
+    default:
+      return "text/plain";
+  }
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error(`Unable to read image "${file.name}".`));
+    };
+
+    reader.onerror = () => reject(new Error(`Unable to read image "${file.name}".`));
+    reader.readAsDataURL(file);
+  });
+}
+
+function truncateTextContent(value: string, limit: number) {
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, limit)}\n[truncated after ${limit} characters]`;
+}
+
+function truncatePreview(value: string, limit: number) {
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, limit)}...`;
 }
 
 export function useWorkspace() {
