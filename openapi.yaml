@@ -1,0 +1,113 @@
+openapi: 3.0.0
+info:
+  title: QA Copilot API
+  version: 1.0.0
+  description: API for QA Copilot, a Next.js SaaS prototype for QA teams.
+servers:
+  - url: http://localhost:3000
+    description: Local Development Server
+paths:
+  /api/bug-reports/generate:
+    post:
+      summary: Generate a bug report
+      description: Generates a structured bug report based on provided inputs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requirements:
+                  type: string
+                  description: The requirements or context for the bug report.
+                notes:
+                  type: string
+                  description: Additional notes or observations.
+                designInputs:
+                  type: string
+                  description: Design specifications related to the bug.
+              example:
+                requirements: "User should be able to log in with email and password."
+                notes: "Login button is disabled after entering valid credentials."
+                designInputs: "Login form design specifies button should be enabled on valid input."
+      responses:
+        '200':
+          description: Successfully generated bug report.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bugReport:
+                    type: string
+                    description: The generated bug report content.
+        '400':
+          description: Invalid input.
+  /api/test-cases/generate:
+    post:
+      summary: Generate test cases
+      description: Generates manual test cases from requirements, notes, and design inputs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requirements:
+                  type: string
+                  description: The requirements for which to generate test cases.
+                notes:
+                  type: string
+                  description: Additional notes or context for test case generation.
+                designInputs:
+                  type: string
+                  description: Design specifications relevant to test cases.
+      responses:
+        '200':
+          description: Successfully generated test cases.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  testCases:
+                    type: array
+                    items:
+                      type: string
+                    description: An array of generated test cases.
+        '400':
+          description: Invalid input.
+  /api/health:
+    get:
+      summary: Health check
+      description: Checks the health status of the API.
+      responses:
+        '200':
+          description: API is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+  /api/ai/providers:
+    get:
+      summary: Get AI providers
+      description: Retrieves a list of available AI providers.
+      responses:
+        '200':
+          description: Successfully retrieved AI providers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: string
+                    example: ["OpenAI", "OpenRouter", "Gemini", "Anthropic"]

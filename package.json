@@ -24,14 +24,18 @@
     "zod": "^3.25.28"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "js-yaml": "^4.1.1",
     "prettier": "^3.8.3",
     "prisma": "^6.7.0",
+    "swagger-ui-express": "^5.0.1",
     "typescript": "^5.8.3"
   }
 }
