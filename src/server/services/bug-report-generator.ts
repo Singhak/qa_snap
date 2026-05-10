@@ -17,6 +17,7 @@ export async function generateBugReport(
     schemaName: "bug_report",
     instructions,
     prompt: buildBugReportPrompt(input),
+    provider: input.provider,
     maxOutputTokens: 1200,
   });
 }
