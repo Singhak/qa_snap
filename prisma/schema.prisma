@@ -60,16 +60,62 @@ model User {
   id               String          @id @default(uuid())
   name             String?
   email            String          @unique
-  passwordHash     String
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  preferredProvider String?
   plan             Plan            @default(FREE)
   monthlyQuota     Int             @default(20)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  accounts         Account[]
+  sessions         Session[]
   projects         Project[]
   bugReports       BugReport[]
   testCaseBatches  TestCaseBatch[]
   generationLogs   GenerationLog[]
   usageEvents      UsageEvent[]
+}
+
+model Account {
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@unique([token])
 }
 
 model Project {
@@ -125,6 +171,9 @@ model TestCaseBatch {
   featureTitle       String
   sourceRequirement  String
   acceptanceCriteria String?
+  contextNotes       String?
+  sourceMaterials    Json?
+  provider           String?
   generationMode     GenerationMode
   status             RecordStatus   @default(DRAFT)
   createdAt          DateTime       @default(now())
