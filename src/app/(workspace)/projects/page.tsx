@@ -1,5 +1,5 @@
-import { ProjectsPage } from '@/components/workspace-pages';
+import { LazyProjectsPage } from '@/components/lazy-workspace-pages';
 
 export default function ProjectsRoute() {
-  return <ProjectsPage />;
+  return <LazyProjectsPage />;
 }

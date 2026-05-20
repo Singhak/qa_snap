@@ -1,5 +1,5 @@
-import { DashboardPage } from '@/components/workspace-pages';
+import { LazyDashboardPage } from '@/components/lazy-workspace-pages';
 
 export default function DashboardRoute() {
-  return <DashboardPage />;
+  return <LazyDashboardPage />;
 }

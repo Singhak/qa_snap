@@ -1,5 +1,5 @@
-import { BugReportsPage } from '@/components/workspace-pages';
+import { LazyBugReportsPage } from '@/components/lazy-workspace-pages';
 
 export default function BugReportsRoute() {
-  return <BugReportsPage />;
+  return <LazyBugReportsPage />;
 }
