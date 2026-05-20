@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { AppProviders } from '@/components/app-providers';
+import { ServiceWorkerRegister } from '@/components/service-worker-register';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -14,7 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppProviders>
+          <ServiceWorkerRegister />
+          {children}
+        </AppProviders>
+      </body>
     </html>
   );
 }
