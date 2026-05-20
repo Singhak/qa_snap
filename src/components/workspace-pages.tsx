@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { BugReportExportActions } from '@/components/bug-report-export-actions';
 import { TestCaseExportActions } from '@/components/test-case-export-actions';
+import { ServiceFailureNotice } from '@/components/service-failure-notice';
 import type { TestCaseDraft } from '@/components/workspace-model';
 import {
   ActiveWorkspacePanel,
@@ -20,7 +21,12 @@ import {
   TextAreaField,
   useWorkspace,
 } from '@/components/workspace';
-import type { AIProvider, GenerateBugReportResponse, SavedTestCaseBatchDto } from '@/types/api';
+import type {
+  AIProvider,
+  GenerateBugReportResponse,
+  QaIntelligenceRunDto,
+  SavedTestCaseBatchDto,
+} from '@/types/api';
 
 export function DashboardPage() {
   const { projectDetail } = useWorkspace();
@@ -265,7 +271,14 @@ export function BugReportsPage() {
                 Configure at least one AI provider in `.env.local`, then select it from the top bar.
               </p>
             ) : null}
-            {bugError ? <p className="meta error-text">{bugError}</p> : null}
+            {bugError ? (
+              <ServiceFailureNotice
+                title="Bug generation failed"
+                message={bugError}
+                actionLabel="Retry"
+                onAction={submitBugReport}
+              />
+            ) : null}
           </div>
         </section>
 
@@ -559,7 +572,14 @@ export function TestCasesPage() {
               </p>
             ) : null}
             {materialError ? <p className="meta error-text">{materialError}</p> : null}
-            {testError ? <p className="meta error-text">{testError}</p> : null}
+            {testError ? (
+              <ServiceFailureNotice
+                title="Test generation failed"
+                message={testError}
+                actionLabel="Retry"
+                onAction={submitTestCases}
+              />
+            ) : null}
           </div>
         </section>
 
@@ -631,6 +651,247 @@ export function TestCasesPage() {
       </section>
     </>
   );
+}
+
+export function IntelligencePage() {
+  const {
+    projectDetail,
+    intelligenceRuns,
+    selectedRun,
+    setSelectedRun,
+    intelligenceError,
+    isAnalyzing,
+    isLoadingRuns,
+    analyzeProject,
+  } = useWorkspace();
+
+  return (
+    <>
+      <ActiveWorkspacePanel />
+      <section className="content-grid">
+        <section className="panel">
+          <SectionHeader
+            eyebrow="QA Intelligence"
+            title="Project analysis"
+            trailing={
+              <button className="button" type="button" onClick={analyzeProject} disabled={isAnalyzing}>
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Project'}
+              </button>
+            }
+          />
+          <div className="overview-grid">
+            <SummaryTile
+              label="Bug inputs"
+              value={String(projectDetail?.bugReports.length ?? 0)}
+              helper="Saved bug reports included in analysis"
+            />
+            <SummaryTile
+              label="Test cases"
+              value={String(
+                projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ??
+                  0
+              )}
+              helper="Saved cases used for coverage matching"
+            />
+            <SummaryTile
+              label="Saved runs"
+              value={String(intelligenceRuns.length)}
+              helper="Historical QA intelligence snapshots"
+            />
+          </div>
+          {intelligenceError ? (
+            <ServiceFailureNotice
+              title="Analysis failed"
+              message={intelligenceError}
+              actionLabel="Retry"
+              onAction={analyzeProject}
+            />
+          ) : null}
+          {!projectDetail ? (
+            <p className="meta warning-text">Select a project before running intelligence.</p>
+          ) : null}
+        </section>
+
+        <section className="panel">
+          <SectionHeader eyebrow="Latest Run" title="Release signal" />
+          {selectedRun ? (
+            <ReleaseRiskPanel run={selectedRun} />
+          ) : (
+            <EmptyState text="Run QA intelligence to see duplicate, gap, risk, and severity signals here." />
+          )}
+        </section>
+      </section>
+
+      {selectedRun ? <IntelligenceFindings run={selectedRun} /> : null}
+
+      <section className="panel">
+        <SectionHeader eyebrow="History" title="Saved analysis runs" />
+        {isLoadingRuns ? <p className="meta">Loading intelligence history...</p> : null}
+        {intelligenceRuns.length ? (
+          <div className="stack">
+            {intelligenceRuns.map((run) => (
+              <button
+                key={run.id}
+                className={`project-row ${selectedRun?.id === run.id ? 'active' : ''}`}
+                type="button"
+                onClick={() => setSelectedRun(run)}
+              >
+                <span>
+                  {run.releaseRisk.level} risk · {run.releaseRisk.score}/100
+                </span>
+                <small>{formatRunDate(run.createdAt)}</small>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <EmptyState text="No saved QA intelligence runs yet." />
+        )}
+      </section>
+    </>
+  );
+}
+
+function ReleaseRiskPanel({ run }: { run: QaIntelligenceRunDto }) {
+  return (
+    <div className="stack">
+      <div className="feature-card feature-highlight">
+        <div className="card-header-inline">
+          <div>
+            <p className="eyebrow">Risk Score</p>
+            <h4>
+              {run.releaseRisk.score}/100 · {run.releaseRisk.level}
+            </h4>
+          </div>
+          <span className="severity-pill">{run.releaseRisk.level}</span>
+        </div>
+        <p className="meta-line">
+          Based on {run.inputSnapshot.bugReportCount} bug report(s),{' '}
+          {run.inputSnapshot.testCaseBatchCount} test batch(es), and{' '}
+          {run.inputSnapshot.testCaseCount} test case(s).
+        </p>
+      </div>
+      <div className="detail-grid">
+        <InfoList title="Top drivers" items={run.releaseRisk.drivers} />
+        <InfoList title="Recommended actions" items={run.releaseRisk.recommendedActions} />
+      </div>
+    </div>
+  );
+}
+
+function IntelligenceFindings({ run }: { run: QaIntelligenceRunDto }) {
+  return (
+    <section className="content-grid">
+      <section className="panel">
+        <SectionHeader eyebrow="Duplicates" title="Likely duplicate bugs" />
+        {run.duplicateBugFindings.length ? (
+          <div className="stack">
+            {run.duplicateBugFindings.map((finding, index) => (
+              <article key={`${finding.bugIds.join('-')}-${index}`} className="feature-card">
+                <div className="card-header-inline">
+                  <h4>{Math.round(finding.confidence * 100)}% confidence</h4>
+                  <span className="meta-chip">{finding.matchingFields.join(', ')}</span>
+                </div>
+                <p>{finding.reason}</p>
+                <p className="meta-line">Bug IDs: {finding.bugIds.join(', ')}</p>
+                <p className="meta-line">Canonical: {finding.recommendedCanonicalBugId}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState text="No likely duplicate bug reports were detected." />
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader eyebrow="Coverage" title="Detected coverage gaps" />
+        {run.coverageGapFindings.length ? (
+          <div className="stack">
+            {run.coverageGapFindings.map((finding, index) => (
+              <article key={`${finding.title}-${index}`} className="feature-card">
+                <div className="card-header-inline">
+                  <h4>{finding.title}</h4>
+                  <span className="meta-chip">{finding.affectedArea}</span>
+                </div>
+                <p>{finding.reason}</p>
+                <InfoList title="Suggested tests" items={finding.suggestedTestCases} />
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState text="No obvious coverage gaps were detected." />
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader eyebrow="Severity" title="Review suggestions" />
+        {run.severitySuggestions.length ? (
+          <div className="stack">
+            {run.severitySuggestions.map((suggestion) => (
+              <article key={suggestion.bugId} className="feature-card">
+                <div className="card-header-inline">
+                  <h4>{suggestion.title}</h4>
+                  <span className="severity-pill">
+                    {suggestion.currentSeverity} -&gt; {suggestion.suggestedSeverity}
+                  </span>
+                </div>
+                <p>{suggestion.reason}</p>
+                <p className="meta-line">{Math.round(suggestion.confidence * 100)}% confidence</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState text="No severity changes were suggested." />
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader eyebrow="Snapshot" title="Analysis metadata" />
+        <div className="overview-grid">
+          <SummaryTile
+            label="Duplicates"
+            value={String(run.duplicateBugFindings.length)}
+            helper="Likely duplicate bug pairs"
+          />
+          <SummaryTile
+            label="Gaps"
+            value={String(run.coverageGapFindings.length)}
+            helper="Coverage concerns to review"
+          />
+          <SummaryTile
+            label="Severity"
+            value={String(run.severitySuggestions.length)}
+            helper="Suggested severity reviews"
+          />
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function InfoList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="info-card">
+      <span>{title}</span>
+      {items.length ? (
+        <ul className="plain-list">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>No items.</p>
+      )}
+    </div>
+  );
+}
+
+function formatRunDate(value: string) {
+  return new Date(value).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 export function SettingsPage() {

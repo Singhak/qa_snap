@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
   useContext,
@@ -24,8 +25,10 @@ import {
 } from '@/components/workspace-model';
 import { useBugGenerator } from '@/hooks/useBugGenerator';
 import { useProjects } from '@/hooks/useProjects';
+import { useQaIntelligence } from '@/hooks/useQaIntelligence';
 import { useTestGenerator } from '@/hooks/useTestGenerator';
 import { getApiErrorMessage } from '@/lib/api/client';
+import { fetchJson } from '@/lib/api/client';
 import type {
   AIProvider,
   AIProviderOption,
@@ -35,6 +38,7 @@ import type {
   GenerateTestCasesResponse,
   ProjectDetailDto,
   ProjectDto,
+  QaIntelligenceRunDto,
   SavedBugReportDto,
   SavedTestCaseBatchDto,
   TestCaseSourceAttachment,
@@ -76,6 +80,12 @@ type WorkspaceContextValue = {
   isSavingBug: boolean;
   isSavingCases: boolean;
   isSavingSettings: boolean;
+  intelligenceRuns: QaIntelligenceRunDto[];
+  selectedRun: QaIntelligenceRunDto | null;
+  setSelectedRun: React.Dispatch<React.SetStateAction<QaIntelligenceRunDto | null>>;
+  intelligenceError: string | null;
+  isAnalyzing: boolean;
+  isLoadingRuns: boolean;
   metrics: {
     totalProjects: number;
     totalBugReports: number;
@@ -94,6 +104,7 @@ type WorkspaceContextValue = {
   resetTestOutput: () => void;
   loadSavedTestCaseBatch: (batch: SavedTestCaseBatchDto) => void;
   saveTestCases: () => Promise<void>;
+  analyzeProject: () => Promise<void>;
   saveSettings: () => Promise<void>;
 };
 
@@ -105,6 +116,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [userSettings, setUserSettings] = useState<UserSettingsDto | null>(null);
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(defaultSettingsDraft);
   const [isSavingSettings, startSaveSettingsTransition] = useTransition();
+  const queryClient = useQueryClient();
+  const providersQuery = useQuery({
+    queryKey: ['ai-providers'],
+    queryFn: () => fetchJson<AIProviderOption[]>('/api/ai/providers', { cache: 'no-store' }),
+  });
+  const userSettingsQuery = useQuery({
+    queryKey: ['user-settings'],
+    queryFn: () => fetchJson<UserSettingsDto>('/api/settings/profile', { cache: 'no-store' }),
+  });
 
   const {
     projects,
@@ -177,13 +197,45 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setSaveMessage,
   });
 
+  const {
+    intelligenceRuns,
+    selectedRun,
+    setSelectedRun,
+    intelligenceError,
+    isAnalyzing,
+    isLoadingRuns,
+    analyzeProject,
+  } = useQaIntelligence({
+    selectedProjectId,
+    selectedProvider,
+  });
+
   useEffect(() => {
     startBootstrapTransition(async () => {
-      await refreshUserSettings();
-      await refreshProviders();
       await refreshProjects();
     });
   }, []);
+
+  useEffect(() => {
+    if (!providersQuery.data) {
+      return;
+    }
+
+    setAvailableProviders(providersQuery.data);
+  }, [providersQuery.data]);
+
+  useEffect(() => {
+    if (!userSettingsQuery.data) {
+      return;
+    }
+
+    const profile = userSettingsQuery.data;
+    setUserSettings(profile);
+    setSettingsDraft({
+      name: profile.name ?? '',
+      preferredProvider: profile.preferredProvider ?? '',
+    });
+  }, [userSettingsQuery.data]);
 
   useEffect(() => {
     if (!availableProviders.length) {
@@ -201,26 +253,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [availableProviders, userSettings?.preferredProvider]);
 
   async function refreshProviders() {
-    const response = await fetch('/api/ai/providers', { cache: 'no-store' });
-    const data = await response.json();
-
-    if (!response.ok) {
-      return;
-    }
-
-    const providers = data as AIProviderOption[];
+    const providers = await queryClient.fetchQuery({
+      queryKey: ['ai-providers'],
+      queryFn: () => fetchJson<AIProviderOption[]>('/api/ai/providers', { cache: 'no-store' }),
+    });
     setAvailableProviders(providers);
   }
 
   async function refreshUserSettings() {
-    const response = await fetch('/api/settings/profile', { cache: 'no-store' });
-    const data = await response.json();
-
-    if (!response.ok) {
-      return;
-    }
-
-    const profile = data as UserSettingsDto;
+    const profile = await queryClient.fetchQuery({
+      queryKey: ['user-settings'],
+      queryFn: () => fetchJson<UserSettingsDto>('/api/settings/profile', { cache: 'no-store' }),
+    });
     setUserSettings(profile);
     setSettingsDraft({
       name: profile.name ?? '',
@@ -248,6 +292,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         }
 
         const profile = data as UserSettingsDto;
+        queryClient.setQueryData(['user-settings'], profile);
         setUserSettings(profile);
         setSelectedProvider(profile.preferredProvider ?? selectedProvider);
         setSaveMessage('Settings saved.');
@@ -293,6 +338,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         isSavingBug,
         isSavingCases,
         isSavingSettings,
+        intelligenceRuns,
+        selectedRun,
+        setSelectedRun,
+        intelligenceError,
+        isAnalyzing,
+        isLoadingRuns,
         metrics,
         setSelectedProjectId,
         createProject,
@@ -306,6 +357,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         resetTestOutput,
         loadSavedTestCaseBatch,
         saveTestCases,
+        analyzeProject,
         saveSettings,
       }}
     >
@@ -417,6 +469,9 @@ export function WorkspaceShell({
         </NavLink>
         <NavLink href="/test-cases" active={pathname === '/test-cases'}>
           Test Cases
+        </NavLink>
+        <NavLink href="/intelligence" active={pathname === '/intelligence'}>
+          Intelligence
         </NavLink>
         <NavLink href="/settings" active={pathname === '/settings'}>
           Settings
