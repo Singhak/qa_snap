@@ -73,6 +73,7 @@ model User {
   projects         Project[]
   bugReports       BugReport[]
   testCaseBatches  TestCaseBatch[]
+  qaIntelligenceRuns QaIntelligenceRun[]
   generationLogs   GenerationLog[]
   usageEvents      UsageEvent[]
 }
@@ -129,6 +130,7 @@ model Project {
   bugReports       BugReport[]
   testCaseBatches  TestCaseBatch[]
   testCases        TestCase[]
+  qaIntelligenceRuns QaIntelligenceRun[]
   generationLogs   GenerationLog[]
 
   @@index([userId])
@@ -207,6 +209,28 @@ model TestCase {
   @@index([projectId])
   @@index([caseType])
   @@index([priority])
+}
+
+model QaIntelligenceRun {
+  id                   String       @id @default(uuid())
+  projectId            String
+  createdById          String
+  provider             String?
+  status               String       @default("SUCCESS")
+  duplicateBugFindings Json
+  coverageGapFindings  Json
+  releaseRisk          Json
+  severitySuggestions  Json
+  inputSnapshot        Json
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  project              Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy            User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model GenerationLog {
