@@ -132,6 +132,70 @@ export interface SavedTestCaseBatchDto {
   cases: GeneratedTestCase[];
 }
 
+export type ReleaseRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type QaIntelligenceStatus = 'SUCCESS' | 'FAILED';
+export type QaAnalysisMode = 'FULL_PROJECT';
+
+export interface DuplicateBugFinding {
+  bugIds: string[];
+  confidence: number;
+  matchingFields: string[];
+  recommendedCanonicalBugId: string;
+  reason: string;
+}
+
+export interface CoverageGapFinding {
+  title: string;
+  affectedArea: string;
+  reason: string;
+  relatedBugIds: string[];
+  relatedTestCaseTitles: string[];
+  suggestedTestCases: string[];
+}
+
+export interface ReleaseRiskScore {
+  score: number;
+  level: ReleaseRiskLevel;
+  drivers: string[];
+  recommendedActions: string[];
+}
+
+export interface SeveritySuggestion {
+  bugId: string;
+  title: string;
+  currentSeverity: Severity;
+  suggestedSeverity: Severity;
+  confidence: number;
+  reason: string;
+}
+
+export interface AnalyzeQaIntelligenceRequest {
+  provider?: AIProvider;
+  mode?: QaAnalysisMode;
+  useAiEnrichment?: boolean;
+}
+
+export interface AnalyzeQaIntelligenceResponse {
+  duplicateBugFindings: DuplicateBugFinding[];
+  coverageGapFindings: CoverageGapFinding[];
+  releaseRisk: ReleaseRiskScore;
+  severitySuggestions: SeveritySuggestion[];
+}
+
+export interface QaIntelligenceRunDto extends AnalyzeQaIntelligenceResponse {
+  id: string;
+  projectId: string;
+  provider?: AIProvider | null;
+  status: QaIntelligenceStatus;
+  inputSnapshot: AnalyzeQaIntelligenceRequest & {
+    bugReportCount: number;
+    testCaseBatchCount: number;
+    testCaseCount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProjectDetailDto extends ProjectDto {
   bugReports: SavedBugReportDto[];
   testCaseBatches: SavedTestCaseBatchDto[];
