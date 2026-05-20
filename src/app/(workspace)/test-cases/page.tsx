@@ -1,5 +1,5 @@
-import { TestCasesPage } from '@/components/workspace-pages';
+import { LazyTestCasesPage } from '@/components/lazy-workspace-pages';
 
 export default function TestCasesRoute() {
-  return <TestCasesPage />;
+  return <LazyTestCasesPage />;
 }

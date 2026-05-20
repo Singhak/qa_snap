@@ -1,5 +1,5 @@
-import { SettingsPage } from '@/components/workspace-pages';
+import { LazySettingsPage } from '@/components/lazy-workspace-pages';
 
 export default function SettingsRoute() {
-  return <SettingsPage />;
+  return <LazySettingsPage />;
 }
