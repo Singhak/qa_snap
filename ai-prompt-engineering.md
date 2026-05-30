@@ -15,11 +15,11 @@ This document outlines the approach to designing and managing prompts for the AI
 
 A typical prompt for QA Copilot's generation features might include:
 
-*   **System Message (if supported by API):** Sets the overall tone, persona, and high-level instructions for the AI.
-*   **User Instruction/Task:** Clearly defines what the AI needs to do (e.g., "Generate a bug report," "Create manual test cases").
-*   **Contextual Information:** Relevant data from the application, such as requirements, user stories, design inputs, or existing QA artifacts.
-*   **Output Format Specification:** Details on how the output should be structured.
-*   **Examples (Few-shot learning):** Providing one or more examples of desired input/output pairs can significantly improve results.
+- **System Message (if supported by API):** Sets the overall tone, persona, and high-level instructions for the AI.
+- **User Instruction/Task:** Clearly defines what the AI needs to do (e.g., "Generate a bug report," "Create manual test cases").
+- **Contextual Information:** Relevant data from the application, such as requirements, user stories, design inputs, or existing QA artifacts.
+- **Output Format Specification:** Details on how the output should be structured.
+- **Examples (Few-shot learning):** Providing one or more examples of desired input/output pairs can significantly improve results.
 
 ## Examples
 
@@ -54,7 +54,10 @@ Prompts are treated as code and are versioned alongside the application. Any cha
 
 ## Future Enhancements
 
-*   **Prompt Templates:** Develop a library of reusable prompt templates.
-*   **Dynamic Prompt Construction:** Implement logic to dynamically construct prompts based on user input and context.
-*   **A/B Testing Prompts:** Ability to test different prompt variations to optimize output quality.
+- **Prompt Templates:** Develop a library of reusable prompt templates.
+- **Dynamic Prompt Construction:** Implement logic to dynamically construct prompts based on user input and context.
+- **A/B Testing Prompts:** Ability to test different prompt variations to optimize output quality.
+
+```
+
 ```
