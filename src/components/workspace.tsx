@@ -252,26 +252,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     );
   }, [availableProviders, userSettings?.preferredProvider]);
 
-  async function refreshProviders() {
-    const providers = await queryClient.fetchQuery({
-      queryKey: ['ai-providers'],
-      queryFn: () => fetchJson<AIProviderOption[]>('/api/ai/providers', { cache: 'no-store' }),
-    });
-    setAvailableProviders(providers);
-  }
-
-  async function refreshUserSettings() {
-    const profile = await queryClient.fetchQuery({
-      queryKey: ['user-settings'],
-      queryFn: () => fetchJson<UserSettingsDto>('/api/settings/profile', { cache: 'no-store' }),
-    });
-    setUserSettings(profile);
-    setSettingsDraft({
-      name: profile.name ?? '',
-      preferredProvider: profile.preferredProvider ?? '',
-    });
-  }
-
   async function saveSettings() {
     setSaveMessage(null);
     setProjectError(null);

@@ -177,7 +177,9 @@ export function ProjectsPage() {
             <TextAreaField
               label="Project description"
               value={projectDraft.description}
-              onChange={(value) => setProjectDraft((current) => ({ ...current, description: value }))}
+              onChange={(value) =>
+                setProjectDraft((current) => ({ ...current, description: value }))
+              }
             />
             <div className="button-row">
               <button
@@ -218,8 +220,10 @@ export function ProjectsPage() {
             <SummaryTile
               label="Coverage volume"
               value={String(
-                projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ??
+                projectDetail?.testCaseBatches.reduce(
+                  (sum, batch) => sum + batch.cases.length,
                   0
+                ) ?? 0
               )}
               helper="Total generated cases in this workspace"
             />
@@ -234,67 +238,72 @@ export function ProjectsPage() {
             title={`Configure webhook sync for ${projectDetail.name}`}
           />
           <p className="panel-lead">
-            Provide API credentials for GitHub and Jira below. Once configured, you can push structured bug reports and test cases directly to external issue trackers.
+            Provide API credentials for GitHub and Jira below. Once configured, you can push
+            structured bug reports and test cases directly to external issue trackers.
           </p>
 
           <div className="content-grid" style={{ marginTop: '1.5rem', gap: '2rem' }}>
             <div className="stack" style={{ gap: '1rem' }}>
-              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <h4
+                style={{
+                  borderBottom: '1px solid var(--color-border)',
+                  paddingBottom: '0.5rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 GitHub Integration
               </h4>
-              <Field
-                label="GitHub Repository"
-                value={githubRepo}
-                onChange={setGithubRepo}
-              />
+              <Field label="GitHub Repository" value={githubRepo} onChange={setGithubRepo} />
               <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem' }}>
                 Use format <code>owner/repo</code> (e.g. <code>facebook/react</code>)
               </div>
-              <Field
-                label="GitHub Access Token"
-                value={githubToken}
-                onChange={setGithubToken}
-              />
+              <Field label="GitHub Access Token" value={githubToken} onChange={setGithubToken} />
             </div>
 
             <div className="stack" style={{ gap: '1rem' }}>
-              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <h4
+                style={{
+                  borderBottom: '1px solid var(--color-border)',
+                  paddingBottom: '0.5rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 Jira Integration
               </h4>
-              <Field
-                label="Jira Domain"
-                value={jiraDomain}
-                onChange={setJiraDomain}
-              />
+              <Field label="Jira Domain" value={jiraDomain} onChange={setJiraDomain} />
               <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem' }}>
                 e.g. <code>my-company.atlassian.net</code> or on-premise hostname
               </div>
-              <Field
-                label="Jira Project Key"
-                value={jiraProjectKey}
-                onChange={setJiraProjectKey}
-              />
+              <Field label="Jira Project Key" value={jiraProjectKey} onChange={setJiraProjectKey} />
               <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem' }}>
                 e.g. <code>PROJ</code>, <code>QA</code>
               </div>
-              <Field
-                label="Jira Email"
-                value={jiraEmail}
-                onChange={setJiraEmail}
-              />
-              <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+              <Field label="Jira Email" value={jiraEmail} onChange={setJiraEmail} />
+              <div
+                className="meta"
+                style={{
+                  marginTop: '-0.5rem',
+                  fontSize: '0.85rem',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
                 Leave empty for Jira Server / on-premise PAT authentication
               </div>
-              <Field
-                label="Jira API Token or PAT"
-                value={jiraToken}
-                onChange={setJiraToken}
-              />
+              <Field label="Jira API Token or PAT" value={jiraToken} onChange={setJiraToken} />
             </div>
           </div>
 
-          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-            <div className="button-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div
+            style={{
+              marginTop: '2rem',
+              borderTop: '1px solid var(--color-border)',
+              paddingTop: '1.5rem',
+            }}
+          >
+            <div
+              className="button-row"
+              style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}
+            >
               <button
                 className="button"
                 type="button"
@@ -305,7 +314,10 @@ export function ProjectsPage() {
               </button>
 
               {integrationsMessage ? (
-                <p className={`meta ${integrationsMessage.type === 'success' ? 'success-text' : 'error-text'}`} style={{ margin: 0 }}>
+                <p
+                  className={`meta ${integrationsMessage.type === 'success' ? 'success-text' : 'error-text'}`}
+                  style={{ margin: 0 }}
+                >
                   {integrationsMessage.text}
                 </p>
               ) : null}
@@ -849,7 +861,12 @@ export function IntelligencePage() {
             eyebrow="QA Intelligence"
             title="Project analysis"
             trailing={
-              <button className="button" type="button" onClick={analyzeProject} disabled={isAnalyzing}>
+              <button
+                className="button"
+                type="button"
+                onClick={analyzeProject}
+                disabled={isAnalyzing}
+              >
                 {isAnalyzing ? 'Analyzing...' : 'Analyze Project'}
               </button>
             }
@@ -863,8 +880,10 @@ export function IntelligencePage() {
             <SummaryTile
               label="Test cases"
               value={String(
-                projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ??
+                projectDetail?.testCaseBatches.reduce(
+                  (sum, batch) => sum + batch.cases.length,
                   0
+                ) ?? 0
               )}
               helper="Saved cases used for coverage matching"
             />
