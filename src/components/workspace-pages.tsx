@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { BugReportExportActions } from '@/components/bug-report-export-actions';
 import { TestCaseExportActions } from '@/components/test-case-export-actions';
@@ -77,68 +77,243 @@ export function ProjectsPage() {
     saveMessage,
   } = useWorkspace();
 
+  const [githubToken, setGithubToken] = useState('');
+  const [githubRepo, setGithubRepo] = useState('');
+  const [jiraDomain, setJiraDomain] = useState('');
+  const [jiraEmail, setJiraEmail] = useState('');
+  const [jiraToken, setJiraToken] = useState('');
+  const [jiraProjectKey, setJiraProjectKey] = useState('');
+  const [isSavingIntegrations, setIsSavingIntegrations] = useState(false);
+  const [integrationsMessage, setIntegrationsMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
+  useEffect(() => {
+    if (!projectDetail) return;
+
+    let active = true;
+    setIntegrationsMessage(null);
+
+    async function fetchIntegrations() {
+      try {
+        const res = await fetch(`/api/projects/${projectDetail!.id}/integrations`);
+        if (!res.ok) throw new Error('Failed to fetch integrations');
+        const data = await res.json();
+        if (active) {
+          setGithubToken(data.githubToken ?? '');
+          setGithubRepo(data.githubRepo ?? '');
+          setJiraDomain(data.jiraDomain ?? '');
+          setJiraEmail(data.jiraEmail ?? '');
+          setJiraToken(data.jiraToken ?? '');
+          setJiraProjectKey(data.jiraProjectKey ?? '');
+        }
+      } catch (err: any) {
+        if (active) {
+          setIntegrationsMessage({
+            text: err.message || 'Could not load project integration settings.',
+            type: 'error',
+          });
+        }
+      }
+    }
+
+    fetchIntegrations();
+    return () => {
+      active = false;
+    };
+  }, [projectDetail?.id]);
+
+  async function handleSaveIntegrations() {
+    if (!projectDetail) return;
+    setIsSavingIntegrations(true);
+    setIntegrationsMessage(null);
+    try {
+      const res = await fetch(`/api/projects/${projectDetail.id}/integrations`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          githubToken: githubToken || null,
+          githubRepo: githubRepo || null,
+          jiraDomain: jiraDomain || null,
+          jiraEmail: jiraEmail || null,
+          jiraToken: jiraToken || null,
+          jiraProjectKey: jiraProjectKey || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to save integration settings.');
+      }
+      setIntegrationsMessage({
+        text: 'Integration settings saved successfully!',
+        type: 'success',
+      });
+      if (data.githubToken) setGithubToken(data.githubToken);
+      if (data.jiraToken) setJiraToken(data.jiraToken);
+    } catch (err: any) {
+      setIntegrationsMessage({
+        text: err.message || 'Failed to save integration settings.',
+        type: 'error',
+      });
+    } finally {
+      setIsSavingIntegrations(false);
+    }
+  }
+
   return (
-    <section className="content-grid">
-      <section className="panel">
-        <SectionHeader eyebrow="Project Control" title="Create and manage workspaces" />
-        <div className="stack">
-          <Field
-            label="Project name"
-            value={projectDraft.name}
-            onChange={(value) => setProjectDraft((current) => ({ ...current, name: value }))}
-          />
-          <TextAreaField
-            label="Project description"
-            value={projectDraft.description}
-            onChange={(value) => setProjectDraft((current) => ({ ...current, description: value }))}
-          />
-          <div className="button-row">
-            <button
-              className="button"
-              type="button"
-              onClick={createProject}
-              disabled={isProjectPending}
-            >
-              {isProjectPending ? 'Creating...' : 'Create Project'}
-            </button>
-            <span className="meta">{projects.length} project(s) available</span>
+    <div className="workspace-stack">
+      <section className="content-grid">
+        <section className="panel">
+          <SectionHeader eyebrow="Project Control" title="Create and manage workspaces" />
+          <div className="stack">
+            <Field
+              label="Project name"
+              value={projectDraft.name}
+              onChange={(value) => setProjectDraft((current) => ({ ...current, name: value }))}
+            />
+            <TextAreaField
+              label="Project description"
+              value={projectDraft.description}
+              onChange={(value) => setProjectDraft((current) => ({ ...current, description: value }))}
+            />
+            <div className="button-row">
+              <button
+                className="button"
+                type="button"
+                onClick={createProject}
+                disabled={isProjectPending}
+              >
+                {isProjectPending ? 'Creating...' : 'Create Project'}
+              </button>
+              <span className="meta">{projects.length} project(s) available</span>
+            </div>
+            {projectError ? <p className="meta error-text">{projectError}</p> : null}
+            {saveMessage ? <p className="meta success-text">{saveMessage}</p> : null}
           </div>
-          {projectError ? <p className="meta error-text">{projectError}</p> : null}
-          {saveMessage ? <p className="meta success-text">{saveMessage}</p> : null}
-        </div>
+        </section>
+
+        <section className="panel">
+          <SectionHeader
+            eyebrow="Selected Project"
+            title={projectDetail?.name ?? 'No project selected'}
+          />
+          <p className="panel-lead">
+            {projectDetail?.description ??
+              'Pick a project from the sidebar to review its saved bug reports and test-case batches.'}
+          </p>
+          <div className="overview-grid">
+            <SummaryTile
+              label="Saved bugs"
+              value={String(projectDetail?.bugReports.length ?? 0)}
+              helper="Structured defect records stored here"
+            />
+            <SummaryTile
+              label="Saved batches"
+              value={String(projectDetail?.testCaseBatches.length ?? 0)}
+              helper="Grouped test-case generation runs"
+            />
+            <SummaryTile
+              label="Coverage volume"
+              value={String(
+                projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ??
+                  0
+              )}
+              helper="Total generated cases in this workspace"
+            />
+          </div>
+        </section>
       </section>
 
-      <section className="panel">
-        <SectionHeader
-          eyebrow="Selected Project"
-          title={projectDetail?.name ?? 'No project selected'}
-        />
-        <p className="panel-lead">
-          {projectDetail?.description ??
-            'Pick a project from the sidebar to review its saved bug reports and test-case batches.'}
-        </p>
-        <div className="overview-grid">
-          <SummaryTile
-            label="Saved bugs"
-            value={String(projectDetail?.bugReports.length ?? 0)}
-            helper="Structured defect records stored here"
+      {projectDetail ? (
+        <section className="panel">
+          <SectionHeader
+            eyebrow="Integrations"
+            title={`Configure webhook sync for ${projectDetail.name}`}
           />
-          <SummaryTile
-            label="Saved batches"
-            value={String(projectDetail?.testCaseBatches.length ?? 0)}
-            helper="Grouped test-case generation runs"
-          />
-          <SummaryTile
-            label="Coverage volume"
-            value={String(
-              projectDetail?.testCaseBatches.reduce((sum, batch) => sum + batch.cases.length, 0) ??
-                0
-            )}
-            helper="Total generated cases in this workspace"
-          />
-        </div>
-      </section>
-    </section>
+          <p className="panel-lead">
+            Provide API credentials for GitHub and Jira below. Once configured, you can push structured bug reports and test cases directly to external issue trackers.
+          </p>
+
+          <div className="content-grid" style={{ marginTop: '1.5rem', gap: '2rem' }}>
+            <div className="stack" style={{ gap: '1rem' }}>
+              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+                GitHub Integration
+              </h4>
+              <Field
+                label="GitHub Repository"
+                value={githubRepo}
+                onChange={setGithubRepo}
+              />
+              <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem' }}>
+                Use format <code>owner/repo</code> (e.g. <code>facebook/react</code>)
+              </div>
+              <Field
+                label="GitHub Access Token"
+                value={githubToken}
+                onChange={setGithubToken}
+              />
+            </div>
+
+            <div className="stack" style={{ gap: '1rem' }}>
+              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+                Jira Integration
+              </h4>
+              <Field
+                label="Jira Domain"
+                value={jiraDomain}
+                onChange={setJiraDomain}
+              />
+              <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem' }}>
+                e.g. <code>my-company.atlassian.net</code> or on-premise hostname
+              </div>
+              <Field
+                label="Jira Project Key"
+                value={jiraProjectKey}
+                onChange={setJiraProjectKey}
+              />
+              <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem' }}>
+                e.g. <code>PROJ</code>, <code>QA</code>
+              </div>
+              <Field
+                label="Jira Email"
+                value={jiraEmail}
+                onChange={setJiraEmail}
+              />
+              <div className="meta" style={{ marginTop: '-0.5rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                Leave empty for Jira Server / on-premise PAT authentication
+              </div>
+              <Field
+                label="Jira API Token or PAT"
+                value={jiraToken}
+                onChange={setJiraToken}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+            <div className="button-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button
+                className="button"
+                type="button"
+                onClick={handleSaveIntegrations}
+                disabled={isSavingIntegrations}
+              >
+                {isSavingIntegrations ? 'Saving Integrations...' : 'Save Integration Settings'}
+              </button>
+
+              {integrationsMessage ? (
+                <p className={`meta ${integrationsMessage.type === 'success' ? 'success-text' : 'error-text'}`} style={{ margin: 0 }}>
+                  {integrationsMessage.text}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+    </div>
   );
 }
 
