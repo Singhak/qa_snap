@@ -132,6 +132,12 @@ model Project {
   testCases        TestCase[]
   qaIntelligenceRuns QaIntelligenceRun[]
   generationLogs   GenerationLog[]
+  githubToken      String?
+  githubRepo       String?
+  jiraDomain       String?
+  jiraEmail        String?
+  jiraToken        String?
+  jiraProjectKey   String?
 
   @@index([userId])
 }
