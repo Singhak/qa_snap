@@ -100,7 +100,7 @@ export function formatTestCaseBatchAsCsv(batch: ExportBatchLike) {
 }
 
 function escapeCsvCell(value: string) {
-  const normalized = String(value ?? '');
+  const normalized = neutralizeSpreadsheetFormula(String(value ?? ''));
   const escaped = normalized.replaceAll('"', '""');
 
   if (/[",\n]/.test(escaped)) {
@@ -108,6 +108,10 @@ function escapeCsvCell(value: string) {
   }
 
   return escaped;
+}
+
+function neutralizeSpreadsheetFormula(value: string) {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 
 function listOrFallback(items: string[]) {

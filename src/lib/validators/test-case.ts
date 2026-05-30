@@ -1,4 +1,6 @@
 import { z } from 'zod';
+
+import { optionalSanitizedText, sanitizedIdentifier, sanitizedText } from '@/lib/sanitization';
 import { aiProviderSchema } from '@/lib/validators/ai';
 
 const allowedTextMimeTypes = [
@@ -20,11 +22,11 @@ export const caseTypeSchema = z.enum(['POSITIVE', 'NEGATIVE', 'EDGE', 'BOUNDARY'
 export const generationModeSchema = z.enum(['SMOKE', 'REGRESSION', 'EDGE_HEAVY']);
 export const testCaseAttachmentSchema = z
   .object({
-    id: z.string().min(1),
-    name: z.string().min(1).max(200),
-    mimeType: z.string().min(1).max(120),
+    id: sanitizedIdentifier({ min: 1, max: 260 }),
+    name: sanitizedText({ min: 1, max: 200, preserveLineBreaks: false }),
+    mimeType: sanitizedIdentifier({ min: 1, max: 120 }),
     kind: z.enum(['TEXT', 'IMAGE']),
-    textContent: z.string().max(20000).optional(),
+    textContent: optionalSanitizedText({ max: 20000 }),
     imageDataUrl: z.string().max(8_000_000).optional(),
   })
   .superRefine((attachment, context) => {
@@ -75,21 +77,21 @@ export const testCaseAttachmentSchema = z
   });
 
 export const generatedTestCaseSchema = z.object({
-  title: z.string().min(3),
-  preconditions: z.array(z.string().min(1)).default([]),
-  steps: z.array(z.string().min(1)).min(1),
-  expectedResult: z.string().min(3),
+  title: sanitizedText({ min: 3, max: 180, preserveLineBreaks: false }),
+  preconditions: z.array(sanitizedText({ min: 1, max: 1000 })).default([]),
+  steps: z.array(sanitizedText({ min: 1, max: 1000 })).min(1),
+  expectedResult: sanitizedText({ min: 3, max: 2500 }),
   priority: prioritySchema,
   caseType: caseTypeSchema,
-  tags: z.array(z.string().min(1)).optional(),
+  tags: z.array(sanitizedText({ min: 1, max: 40, preserveLineBreaks: false })).optional(),
 });
 
 export const generateTestCasesRequestSchema = z.object({
   projectId: z.string().uuid(),
-  featureTitle: z.string().min(3),
-  sourceRequirement: z.string().min(10),
-  acceptanceCriteria: z.string().min(1).optional(),
-  contextNotes: z.string().max(4000).optional(),
+  featureTitle: sanitizedText({ min: 3, max: 180, preserveLineBreaks: false }),
+  sourceRequirement: sanitizedText({ min: 10, max: 12000 }),
+  acceptanceCriteria: optionalSanitizedText({ min: 1, max: 6000 }),
+  contextNotes: optionalSanitizedText({ max: 4000 }),
   generationMode: generationModeSchema,
   attachments: z.array(testCaseAttachmentSchema).max(6).optional(),
   provider: aiProviderSchema.optional(),
@@ -104,5 +106,6 @@ export const saveTestCaseBatchRequestSchema = generateTestCasesRequestSchema.ext
 });
 
 export type GenerateTestCasesRequestInput = z.input<typeof generateTestCasesRequestSchema>;
+export type GenerateTestCasesRequestOutput = z.output<typeof generateTestCasesRequestSchema>;
 export type GenerateTestCasesResponseOutput = z.output<typeof generateTestCasesResponseSchema>;
 export type SaveTestCaseBatchRequestInput = z.input<typeof saveTestCaseBatchRequestSchema>;

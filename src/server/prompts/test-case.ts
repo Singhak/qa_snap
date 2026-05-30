@@ -1,13 +1,13 @@
-import type { GenerateTestCasesRequestInput } from '@/lib/validators/test-case';
+import type { GenerateTestCasesRequestOutput } from '@/lib/validators/test-case';
 
-const modeInstructions: Record<GenerateTestCasesRequestInput['generationMode'], string> = {
+const modeInstructions: Record<GenerateTestCasesRequestOutput['generationMode'], string> = {
   SMOKE: 'Focus on critical happy-path coverage and release-blocking checks.',
   REGRESSION:
     'Provide broad practical coverage across normal, negative, and integration scenarios.',
   EDGE_HEAVY: 'Emphasize edge cases, boundary conditions, validation, and failure handling.',
 };
 
-export function buildTestCasePrompt(input: GenerateTestCasesRequestInput) {
+export function buildTestCasePrompt(input: GenerateTestCasesRequestOutput) {
   const textAttachments =
     input.attachments?.filter((attachment) => attachment.kind === 'TEXT') ?? [];
   const imageAttachments =
