@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import { optionalSanitizedText, sanitizedText } from '@/lib/sanitization';
+
 export const createProjectRequestSchema = z.object({
-  name: z.string().min(2).max(80),
-  description: z.string().max(500).optional(),
+  name: sanitizedText({ min: 2, max: 80, preserveLineBreaks: false }),
+  description: optionalSanitizedText({ max: 500 }),
 });
 
 export const updateProjectRequestSchema = createProjectRequestSchema;
