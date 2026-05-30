@@ -4,12 +4,13 @@ import { ZodError, z } from 'zod';
 
 import { jsonError } from '@/lib/api/errors';
 import { prisma } from '@/lib/prisma';
+import { sanitizedText } from '@/lib/sanitization';
 import { aiProviderSchema } from '@/lib/validators/ai';
 import { getCurrentUser } from '@/server/auth/current-user';
 import { mapUserSettings } from '@/server/services/mappers';
 
 const updateProfileSchema = z.object({
-  name: z.string().trim().min(2).max(80).optional(),
+  name: sanitizedText({ min: 2, max: 80, preserveLineBreaks: false }).optional(),
   preferredProvider: aiProviderSchema.or(z.literal('')).optional(),
 });
 

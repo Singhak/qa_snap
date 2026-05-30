@@ -4,10 +4,11 @@ import { ZodError, z } from 'zod';
 
 import { jsonError } from '@/lib/api/errors';
 import { prisma } from '@/lib/prisma';
+import { sanitizedIdentifier, sanitizedText } from '@/lib/sanitization';
 
 const registerSchema = z.object({
-  name: z.string().min(2).max(80),
-  email: z.string().email(),
+  name: sanitizedText({ min: 2, max: 80, preserveLineBreaks: false }),
+  email: sanitizedIdentifier({ max: 254 }).pipe(z.string().email()),
   password: z.string().min(8).max(128),
 });
 
