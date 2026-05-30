@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { jsonError } from '@/lib/api/errors';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/server/auth/current-user';
-import { mapProjectDetail } from '@/server/services/mappers';
 import { mapQaIntelligenceRun, qaIntelligenceRuns } from '@/server/services/qa-intelligence-runs';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

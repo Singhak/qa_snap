@@ -6,10 +6,7 @@ import { exportBugReportToGitHub } from '@/lib/api/integrations/github';
 import { getCurrentUser } from '@/server/auth/current-user';
 import { createRequestId, logApiEvent, serializeError } from '@/server/monitoring';
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const requestId = createRequestId();
   const { id } = await params;
   let userId: string | null = null;
@@ -85,7 +82,8 @@ export async function POST(
       },
     });
 
-    const message = error instanceof Error ? error.message : 'Unable to export bug report to GitHub.';
+    const message =
+      error instanceof Error ? error.message : 'Unable to export bug report to GitHub.';
     return jsonError('GITHUB_EXPORT_FAILED', message, 500, { requestId });
   }
 }

@@ -19,10 +19,7 @@ function isMasked(val?: string | null): boolean {
   return val.includes('••') || val.includes('••••');
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const user = await getCurrentUser();
@@ -50,24 +47,24 @@ export async function GET(
       return jsonError('PROJECT_NOT_FOUND', 'Project was not found.', 404);
     }
 
-    return NextResponse.json({
-      githubRepo: project.githubRepo ?? '',
-      jiraDomain: project.jiraDomain ?? '',
-      jiraEmail: project.jiraEmail ?? '',
-      jiraProjectKey: project.jiraProjectKey ?? '',
-      githubToken: project.githubToken ? maskSecret(project.githubToken) : '',
-      jiraToken: project.jiraToken ? maskSecret(project.jiraToken) : '',
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        githubRepo: project.githubRepo ?? '',
+        jiraDomain: project.jiraDomain ?? '',
+        jiraEmail: project.jiraEmail ?? '',
+        jiraProjectKey: project.jiraProjectKey ?? '',
+        githubToken: project.githubToken ? maskSecret(project.githubToken) : '',
+        jiraToken: project.jiraToken ? maskSecret(project.jiraToken) : '',
+      },
+      { status: 200 }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load project integrations.';
     return jsonError('INTEGRATIONS_FETCH_FAILED', message, 500);
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const user = await getCurrentUser();
