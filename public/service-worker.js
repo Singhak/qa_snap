@@ -3,7 +3,10 @@ const STATIC_CACHE_URLS = ['/', '/pricing', '/privacy', '/terms', '/contact'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_CACHE_URLS)).catch(() => undefined)
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_CACHE_URLS))
+      .catch(() => undefined)
   );
   self.skipWaiting();
 });
@@ -45,7 +48,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (request.destination === 'script' || request.destination === 'style' || request.destination === 'font') {
+  if (
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    request.destination === 'font'
+  ) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>

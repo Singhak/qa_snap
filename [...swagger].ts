@@ -19,9 +19,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   // but Next.js provides a wrapped NextApiResponse.
   // We need to cast it to the expected type.
   // The `swaggerUi.serve` function handles the routing for all Swagger UI assets.
-  const serveHandlers = Array.isArray(swaggerUi.serve)
-    ? swaggerUi.serve
-    : [swaggerUi.serve];
+  const serveHandlers = Array.isArray(swaggerUi.serve) ? swaggerUi.serve : [swaggerUi.serve];
 
   const runServeHandler = (index = 0) => {
     const handler = serveHandlers[index];

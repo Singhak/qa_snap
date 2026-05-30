@@ -36,11 +36,13 @@ providers.push(
     },
     async authorize(credentials) {
       // --- Start of Dev User Logic (Development Only) ---
-      if (process.env.NODE_ENV === 'development' &&
-          credentials?.email === process.env.DEV_USER_EMAIL &&
-          credentials?.password === process.env.DEV_USER_PASSWORD) {
+      if (
+        process.env.NODE_ENV === 'development' &&
+        credentials?.email === process.env.DEV_USER_EMAIL &&
+        credentials?.password === process.env.DEV_USER_PASSWORD
+      ) {
         logger.info('Attempting to log in with development user credentials.');
-        
+
         const devUserEmail = process.env.DEV_USER_EMAIL as string;
         const devUserPlainPassword = process.env.DEV_USER_PASSWORD as string; // This is the plain text password for dev
 
@@ -51,7 +53,9 @@ providers.push(
         if (!user || !user.passwordHash) {
           // If dev user doesn't exist, or exists but has no password (e.g., created via OAuth initially),
           // create/update it with a hashed password.
-          logger.info(`Development user with email ${devUserEmail} not found or password missing. Creating/updating...`);
+          logger.info(
+            `Development user with email ${devUserEmail} not found or password missing. Creating/updating...`
+          );
           const hashedPassword = await bcrypt.hash(devUserPlainPassword, 10);
           user = await prisma.user.upsert({
             where: { email: devUserEmail.toLowerCase() },

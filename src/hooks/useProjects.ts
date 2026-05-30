@@ -107,7 +107,8 @@ export function useProjects(args: { defaultProjectDraft: CreateProjectRequest })
   async function refreshProjectDetail(projectId: string) {
     const detail = await queryClient.fetchQuery({
       queryKey: ['project-detail', projectId],
-      queryFn: () => fetchJson<ProjectDetailDto>(`/api/projects/${projectId}`, { cache: 'no-store' }),
+      queryFn: () =>
+        fetchJson<ProjectDetailDto>(`/api/projects/${projectId}`, { cache: 'no-store' }),
     });
     setProjectDetail(detail);
     setProjectError(null);
