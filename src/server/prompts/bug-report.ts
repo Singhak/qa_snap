@@ -1,6 +1,6 @@
-import type { GenerateBugReportRequestInput } from '@/lib/validators/bug-report';
+import type { GenerateBugReportRequestOutput } from '@/lib/validators/bug-report';
 
-export function buildBugReportPrompt(input: GenerateBugReportRequestInput) {
+export function buildBugReportPrompt(input: GenerateBugReportRequestOutput) {
   return [
     'You are a senior QA analyst who writes clear, developer-friendly bug reports.',
     'Convert the tester input into a structured bug report.',

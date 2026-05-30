@@ -1,5 +1,5 @@
 import {
-  type GenerateBugReportRequestInput,
+  type GenerateBugReportRequestOutput,
   generateBugReportResponseSchema,
   type GenerateBugReportResponseOutput,
 } from '@/lib/validators/bug-report';
@@ -7,7 +7,7 @@ import { buildBugReportPrompt } from '@/server/prompts/bug-report';
 import { generateStructuredOutput } from '@/server/services/structured-output';
 
 export async function generateBugReport(
-  input: GenerateBugReportRequestInput
+  input: GenerateBugReportRequestOutput
 ): Promise<GenerateBugReportResponseOutput> {
   const instructions =
     'Return a structured QA bug report in JSON that follows the provided schema exactly.';
