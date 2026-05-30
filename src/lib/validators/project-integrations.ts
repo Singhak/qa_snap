@@ -13,9 +13,12 @@ export const projectIntegrationsSchema = z.object({
   jiraDomain: z
     .string()
     .trim()
-    .refine((val) => !val || /^[a-zA-Z0-9.-]+\.atlassian\.net$/.test(val) || /^[a-zA-Z0-9.-]+$/.test(val), {
-      message: 'Jira domain must be a valid Atlassian domain or hostname',
-    })
+    .refine(
+      (val) => !val || /^[a-zA-Z0-9.-]+\.atlassian\.net$/.test(val) || /^[a-zA-Z0-9.-]+$/.test(val),
+      {
+        message: 'Jira domain must be a valid Atlassian domain or hostname',
+      }
+    )
     .optional()
     .nullable(),
   jiraEmail: z
@@ -26,12 +29,7 @@ export const projectIntegrationsSchema = z.object({
     .nullable()
     .or(z.literal('')),
   jiraToken: z.string().trim().optional().nullable(),
-  jiraProjectKey: z
-    .string()
-    .trim()
-    .max(10)
-    .optional()
-    .nullable(),
+  jiraProjectKey: z.string().trim().max(10).optional().nullable(),
 });
 
 export type ProjectIntegrationsInput = z.infer<typeof projectIntegrationsSchema>;

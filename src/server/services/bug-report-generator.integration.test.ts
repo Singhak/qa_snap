@@ -12,7 +12,8 @@ describe('bug-report-generator integration', () => {
     // Setup a valid fixture matching the Zod schema
     const mockBugReportOutput = {
       title: 'Checkout button fails to respond on click',
-      summary: 'When clicking the checkout button in the cart, the system does not redirect or show any loading states.',
+      summary:
+        'When clicking the checkout button in the cart, the system does not redirect or show any loading states.',
       stepsToReproduce: [
         'Navigate to the shopping cart page',
         'Add items to the cart',
@@ -23,9 +24,7 @@ describe('bug-report-generator integration', () => {
       severity: 'HIGH' as const,
       priority: 'HIGH' as const,
       environmentSummary: 'Chrome 124.0, Windows 11',
-      assumptions: [
-        'The backend cart endpoint might be failing or slow to respond',
-      ],
+      assumptions: ['The backend cart endpoint might be failing or slow to respond'],
       confidenceScore: 0.95,
     };
 
@@ -35,7 +34,7 @@ describe('bug-report-generator integration', () => {
     // Provide a valid request payload
     const mockInput = {
       projectId: 'ca5f0128-2497-4832-a52c-5cd6e5b26640',
-      rawInput: 'The checkout button doesn\'t work at all when clicked. Please fix this.',
+      rawInput: "The checkout button doesn't work at all when clicked. Please fix this.",
       expectedInput: 'Checkout goes to checkout page',
       actualInput: 'Nothing happens',
       environmentInput: 'Chrome, Windows',

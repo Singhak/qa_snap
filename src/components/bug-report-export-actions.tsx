@@ -132,13 +132,28 @@ export function BugReportExportActions({
   return (
     <div className="export-actions stack" style={{ gap: '0.75rem' }}>
       <div className="button-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <button className="button secondary" type="button" onClick={() => downloadFile('csv')} disabled={isBusy}>
+        <button
+          className="button secondary"
+          type="button"
+          onClick={() => downloadFile('csv')}
+          disabled={isBusy}
+        >
           Download CSV
         </button>
-        <button className="button ghost" type="button" onClick={() => downloadFile('json')} disabled={isBusy}>
+        <button
+          className="button ghost"
+          type="button"
+          onClick={() => downloadFile('json')}
+          disabled={isBusy}
+        >
           Download JSON
         </button>
-        <button className="button ghost" type="button" onClick={() => downloadFile('md')} disabled={isBusy}>
+        <button
+          className="button ghost"
+          type="button"
+          onClick={() => downloadFile('md')}
+          disabled={isBusy}
+        >
           Download Markdown
         </button>
         <button className="button ghost" type="button" onClick={copyMarkdown} disabled={isBusy}>
@@ -177,7 +192,11 @@ export function BugReportExportActions({
               target="_blank"
               rel="noopener noreferrer"
               className="link"
-              style={{ textDecoration: 'underline', color: 'var(--color-primary, inherit)', fontWeight: '600' }}
+              style={{
+                textDecoration: 'underline',
+                color: 'var(--color-primary, inherit)',
+                fontWeight: '600',
+              }}
             >
               View Ticket/Issue
             </a>
