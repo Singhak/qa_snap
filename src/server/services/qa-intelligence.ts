@@ -88,14 +88,14 @@ export function detectDuplicateBugs(bugReports: SavedBugReportDto[]): DuplicateB
       findings.push({
         bugIds: [left.id, right.id],
         confidence: roundScore(weightedConfidence),
-        matchingFields: fields
-          .filter((field) => field.score >= 0.45)
-          .map((field) => field.name),
+        matchingFields: fields.filter((field) => field.score >= 0.45).map((field) => field.name),
         recommendedCanonicalBugId: canonical.id,
-        reason: `These reports share similar ${fields
-          .filter((field) => field.score >= 0.45)
-          .map((field) => field.name.toLowerCase())
-          .join(', ') || 'bug language'}. Keep the clearer report as canonical.`,
+        reason: `These reports share similar ${
+          fields
+            .filter((field) => field.score >= 0.45)
+            .map((field) => field.name.toLowerCase())
+            .join(', ') || 'bug language'
+        }. Keep the clearer report as canonical.`,
       });
     }
   }
@@ -129,8 +129,7 @@ export function detectCoverageGaps(
       findings.push({
         title: `Add regression coverage for: ${bugReport.title}`,
         affectedArea: inferArea(bugReport.title, bugReport.summary),
-        reason:
-          'A saved bug exists without a strongly matching test case in the project history.',
+        reason: 'A saved bug exists without a strongly matching test case in the project history.',
         relatedBugIds: [bugReport.id],
         relatedTestCaseTitles: bestMatch ? [bestMatch.testCase.title] : [],
         suggestedTestCases: buildSuggestedTestsForBug(bugReport),
@@ -140,7 +139,9 @@ export function detectCoverageGaps(
 
   for (const batch of testCaseBatches) {
     const caseTypes = new Set(batch.cases.map((testCase) => testCase.caseType));
-    const missingTypes = ['NEGATIVE', 'EDGE', 'BOUNDARY'].filter((type) => !caseTypes.has(type as never));
+    const missingTypes = ['NEGATIVE', 'EDGE', 'BOUNDARY'].filter(
+      (type) => !caseTypes.has(type as never)
+    );
 
     if (missingTypes.length) {
       findings.push({
@@ -149,7 +150,9 @@ export function detectCoverageGaps(
         reason: `This batch is missing ${missingTypes.join(', ')} coverage.`,
         relatedBugIds: [],
         relatedTestCaseTitles: batch.cases.slice(0, 3).map((testCase) => testCase.title),
-        suggestedTestCases: missingTypes.map((type) => `${type} scenario for ${batch.featureTitle}`),
+        suggestedTestCases: missingTypes.map(
+          (type) => `${type} scenario for ${batch.featureTitle}`
+        ),
       });
     }
   }
@@ -252,7 +255,13 @@ function compareBugFields(left: SavedBugReportDto, right: SavedBugReportDto) {
 function calculateDuplicateConfidence(fields: Array<{ name: string; score: number }>) {
   const [title, summary, actual, expected, steps] = fields;
 
-  return title.score * 0.32 + summary.score * 0.22 + actual.score * 0.24 + expected.score * 0.1 + steps.score * 0.12;
+  return (
+    title.score * 0.32 +
+    summary.score * 0.22 +
+    actual.score * 0.24 +
+    expected.score * 0.1 +
+    steps.score * 0.12
+  );
 }
 
 function chooseCanonicalBug(left: SavedBugReportDto, right: SavedBugReportDto) {
@@ -316,11 +325,33 @@ function inferSeverity(bugReport: SavedBugReportDto): Severity {
     .join(' ')
     .toLowerCase();
 
-  if (matchesAny(text, ['data loss', 'security', 'payment', 'checkout', 'crash', 'unable to login', 'blocked', 'production down'])) {
+  if (
+    matchesAny(text, [
+      'data loss',
+      'security',
+      'payment',
+      'checkout',
+      'crash',
+      'unable to login',
+      'blocked',
+      'production down',
+    ])
+  ) {
     return 'CRITICAL';
   }
 
-  if (matchesAny(text, ['cannot', 'failed', 'error', '500', 'broken', 'stuck', 'incorrect total', 'permission'])) {
+  if (
+    matchesAny(text, [
+      'cannot',
+      'failed',
+      'error',
+      '500',
+      'broken',
+      'stuck',
+      'incorrect total',
+      'permission',
+    ])
+  ) {
     return 'HIGH';
   }
 
@@ -363,7 +394,9 @@ function buildRiskDrivers({
   testCaseCount: number;
 }) {
   const drivers: string[] = [];
-  const highImpactCount = bugReports.filter((bug) => bug.severity === 'HIGH' || bug.severity === 'CRITICAL').length;
+  const highImpactCount = bugReports.filter(
+    (bug) => bug.severity === 'HIGH' || bug.severity === 'CRITICAL'
+  ).length;
 
   if (highImpactCount) {
     drivers.push(`${highImpactCount} high-impact bug report(s) remain in project history.`);
@@ -417,7 +450,9 @@ function buildRiskActions({
     actions.push('Run a focused regression pass before approving release.');
   }
 
-  return actions.length ? actions : ['Continue monitoring new bugs and keep regression coverage current.'];
+  return actions.length
+    ? actions
+    : ['Continue monitoring new bugs and keep regression coverage current.'];
 }
 
 function inferArea(...values: string[]) {

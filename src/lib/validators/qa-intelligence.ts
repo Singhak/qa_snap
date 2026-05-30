@@ -10,9 +10,7 @@ export const analyzeQaIntelligenceRequestSchema = z.object({
   useAiEnrichment: z.boolean().default(false),
 });
 
-export type AnalyzeQaIntelligenceRequestInput = z.input<
-  typeof analyzeQaIntelligenceRequestSchema
->;
+export type AnalyzeQaIntelligenceRequestInput = z.input<typeof analyzeQaIntelligenceRequestSchema>;
 export type AnalyzeQaIntelligenceRequestOutput = z.output<
   typeof analyzeQaIntelligenceRequestSchema
 >;
