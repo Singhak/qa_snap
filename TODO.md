@@ -131,3 +131,20 @@
 - Add comprehensive error boundaries
 - Create API documentation
 - Add unit tests for critical services
+
+# TODO — Improvement Suggestions (Progress Tracker)
+
+## Implement plan: Rate limiting + HTTP 429 mapping
+
+- [x] Add `assertRateLimit` to `src/app/api/bug-reports/generate/route.ts`
+- [x] Add `assertRateLimit` to `src/app/api/test-cases/generate/route.ts`
+- [x] Update both routes to return HTTP 429 for quota/rate-limit errors
+
+- [x] Run `npm run lint`
+- [x] Run `npm run typecheck`
+- [x] Run `npm run test:unit`
+- [x] Run `npm run test:integration`
+
+
+
+  

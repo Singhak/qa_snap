@@ -8,6 +8,8 @@ import { generateTestCases } from '@/server/services/test-case-generator';
 import { logGenerationEvent, normalizeGenerationError } from '@/server/services/generation-logging';
 import { createRequestId, logApiEvent, serializeError } from '@/server/monitoring';
 import { assertWithinMonthlyQuota } from '@/server/services/quota';
+import { assertRateLimit } from '@/server/services/rate-limit';
+
 
 export async function POST(request: NextRequest) {
   const requestId = createRequestId();
@@ -24,7 +26,13 @@ export async function POST(request: NextRequest) {
     }
 
     userId = user.id;
+    assertRateLimit({
+      key: `test-cases:${user.id}`,
+      limit: 20,
+      windowMs: 60 * 60 * 1000,
+    });
     await assertWithinMonthlyQuota(user.id);
+
     requestBody = await request.json();
     const input = generateTestCasesRequestSchema.parse(requestBody);
     const output = await generateTestCases(input);
@@ -64,6 +72,13 @@ export async function POST(request: NextRequest) {
     }
 
     const message = normalizeGenerationError(error);
+    const httpStatus =
+      message.toLowerCase().includes('rate or quota') ||
+      message.toLowerCase().includes('rate limit') ||
+      message.toLowerCase().includes('quota')
+        ? 429
+        : 400;
+
     logApiEvent({
       level: 'error',
       requestId,
@@ -77,6 +92,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return jsonError('TEST_CASE_GENERATION_FAILED', message, 400, { requestId });
+    return jsonError('TEST_CASE_GENERATION_FAILED', message, httpStatus, { requestId });
+
   }
 }
