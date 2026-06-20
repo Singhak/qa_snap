@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
-// eslint-disable-next-line no-control-regex -- This sanitizer intentionally removes unsafe control characters.
-const CONTROL_CHARS_EXCEPT_SAFE_WHITESPACE = new RegExp(
-  '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]',
-  'g'
-);
+const CONTROL_CHAR_RANGES = ['\\u0000-\\u0008', '\\u000B', '\\u000C', '\\u000E-\\u001F', '\\u007F'];
+const CONTROL_CHARS_EXCEPT_SAFE_WHITESPACE = new RegExp(`[${CONTROL_CHAR_RANGES.join('')}]`, 'g');
 const BIDI_CONTROL_CHARS = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
 const DANGEROUS_HTML_BLOCKS =
   /<\s*(script|style|iframe|object|embed|link|meta|base|form|input|button|textarea|select|option)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi;
