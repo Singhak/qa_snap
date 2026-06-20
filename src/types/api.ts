@@ -208,3 +208,25 @@ export interface ApiErrorResponse {
     requestId?: string;
   };
 }
+
+export interface GherkinScenario {
+  name: string;
+  given: string[];
+  when: string[];
+  then: string[];
+  tags?: string[];
+}
+
+export interface GenerateAcceptanceCriteriaRequest {
+  projectId: string;
+  storyDescription: string;
+  jiraIssueKey?: string;
+  contextNotes?: string;
+  provider?: AIProvider;
+}
+
+export interface GenerateAcceptanceCriteriaResponse {
+  featureTitle: string;
+  scenarios: GherkinScenario[];
+  rawGherkin: string;
+}
