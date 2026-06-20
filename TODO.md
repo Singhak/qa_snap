@@ -1,150 +1,129 @@
-# TODO — Improvement Suggestions
+# TODO — QA Copilot Progress Tracker
 
-## 1. Code Quality & Development Experience
+Last updated: 2026-06-20
 
-- **Linting & Formatting**
-  - Missing ESLint and Prettier configuration
+## Completed
 
-- **Environment Setup**
-  - Add `.env.example` with all required variables documented
-  - Consider using a `.env.schema` file for validation
+### Code Quality & Developer Experience
 
-## 2. Security Enhancements
+- [x] ESLint 9 flat config added.
+- [x] Prettier config and ignore file added.
+- [x] Reliable `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, and test scripts exist.
+- [x] `.env.example` documents required and optional local variables.
+- [x] Prisma local setup and Windows migration cleanup notes are documented in `README.md`.
 
-- **API Security**
-  - Add rate limiting to API routes (consider `express-rate-limit` or similar)
-  - Implement CORS configuration in `next.config.ts`
-  - Add input sanitization for user-generated content
+### Security Baseline
 
-- **Authentication Improvements**
-  - Add password reset functionality
-  - Implement session management with refresh tokens
-  - Add account lockout after failed attempts
+- [x] `AUTH_SECRET` is required for Auth.js.
+- [x] Zod validation exists at API boundaries.
+- [x] Shared sanitization exists for user-generated project, profile, bug-report, test-case, attachment, and integration inputs.
+- [x] CSV export formula-injection protection exists for downloaded QA artifacts.
+- [x] Route-level quota/rate-limit checks exist for expensive AI generation and QA intelligence routes.
+- [x] Middleware-level rate limiting exists for mutating API requests.
+- [x] Middleware-level CORS allowlist exists via `APP_ALLOWED_ORIGINS`.
+- [x] Middleware-level security headers exist.
 
-## 3. Performance Optimizations
+### Frontend & UX
 
-- **Database**
-  - Add database connection pooling
-  - Implement database query optimization and caching
-  - Consider read replicas for heavy read operations
+- [x] React Query/TanStack Query is installed and used for workspace data.
+- [x] Lazy workspace page loading/code splitting exists.
+- [x] Service worker exists for static public-page caching.
+- [x] React error boundaries exist for app, workspace, sign-in, and sign-up surfaces.
+- [x] AI service failures degrade into readable UI notices.
+- [x] Public landing, pricing, privacy, terms, and contact/support pages exist.
 
-- **Frontend**
-  - Add React Query/TanStack Query for client-side caching
-  - Implement code splitting and lazy loading
-  - Add a service worker for caching static assets
+### QA Product Features
 
-## 4. Error Handling & Monitoring
+- [x] Project CRUD exists.
+- [x] Bug report generation, editing, persistence, history detail, search/filtering, and exports exist.
+- [x] Test-case generation from text/image source material, editing, persistence, history detail, search/filtering, and exports exist.
+- [x] Multiple AI providers are supported: OpenAI, OpenRouter, Gemini, and Anthropic.
+- [x] QA Intelligence exists with duplicate detection, coverage gaps, release risk scoring, and severity suggestions.
+- [x] QA Intelligence runs are persisted and browsable by project.
+- [x] GitHub and Jira export paths exist for saved bug reports.
 
-- **Enhanced Monitoring**
-  - Integrate Sentry or similar error tracking service
-  - Add performance monitoring (response times, memory usage)
-  - Implement distributed tracing for API calls
+### Monitoring & Docs
 
-- **Error Boundaries**
-  - Add React error boundaries for better UX
-  - Implement graceful degradation for AI service failures
+- [x] Request IDs and structured API logs exist for key routes.
+- [x] Generation audit logs and usage events are persisted in Prisma.
+- [x] Health endpoint exists at `GET /api/health`.
+- [x] AI prompt approach is documented in `docs/ai-prompt-engineering.md`.
+- [x] API versioning strategy is documented in `docs/api-versioning-strategy.md`.
+- [x] Security and monitoring baseline is documented in `docs/security-and-monitoring.md`.
+- [x] OpenAPI draft exists in `openapi.yaml`.
 
-## 5. Testing
+### Testing
 
-- Missing Test Coverage
-  - Add unit tests for services and utilities (Done: See `package.json` scripts and `jest.unit.config.js`)
-  - Add integration tests for API routes (Done: See `package.json` scripts and `jest.integration.config.js`)
-  - Add E2E tests with Playwright or Cypress (Done: See `package.json` scripts and `playwright.config.ts`)
-  - Add testing scripts to `package.json` (Done)
+- [x] Unit test script exists.
+- [x] Integration test script exists.
+- [x] E2E test script exists.
+- [x] Unit coverage exists for QA intelligence and sanitization.
 
-## 6. Documentation
+## Partially Done
 
-- **API Documentation**
-  - Add OpenAPI/Swagger documentation for API endpoints
-  - Document the AI prompt engineering approach (Done: see `docs/ai-prompt-engineering.md`)
-  - Add API versioning strategy (Done: see `docs/api-versioning-strategy.md`)
+- [ ] OpenAPI documentation exists but is outdated and should be refreshed against current route schemas.
+- [ ] Monitoring is app-native; hosted error tracking, uptime checks, alerts, and tracing are not integrated.
+- [ ] Rate limiting is in-memory and suitable for single-instance beta only; production needs Redis or provider-backed shared limits.
+- [ ] Service worker caches public static pages only; authenticated workspace offline behavior is not implemented.
+- [ ] Search/filtering exists inside project pages but not as a unified global command/search experience.
+- [ ] Docs exist, but ADRs for major architecture decisions are still missing.
 
-- **Code Documentation**
-  - Add JSDoc comments to complex functions
-  - Create architecture decision records (ADRs)
-  - Add contribution guidelines
+## Remaining Before Public Launch
 
-## 7. Feature Enhancements
+### Authentication & Account Security
 
-- **AI Capabilities**
-  - Add support for more AI providers (Claude, Mistral, etc.)
-  - Implement model selection based on task complexity
-  - Add prompt versioning and A/B testing
+- [ ] Password reset flow.
+- [ ] Failed-login lockout or throttling.
+- [ ] Account/session management screen.
+- [ ] Optional email verification.
 
-- **User Experience**
-  - Add bulk operations for test cases and bug reports
-  - Implement real-time collaboration features
-  - Add export to more formats (JIRA, TestRail integration)
-  - Add search and filtering capabilities
+### Production Monitoring
 
-- **Business Logic**
-  - Implement team management and permissions
-  - Add usage analytics dashboard
-  - Implement subscription management with Stripe
-  - Add audit logs for compliance
+- [ ] Sentry or equivalent error tracking.
+- [ ] Hosted log aggregation.
+- [ ] Uptime monitoring for `/api/health`.
+- [ ] Alerting for AI provider failures, DB failures, and high 429 rates.
+- [ ] Performance monitoring for route latency and memory usage.
 
-## 8. DevOps & Deployment
+### Billing & Team Features
 
-- **CI/CD Pipeline**
-  - Add GitHub Actions (or similar) CI pipeline
-  - Implement automated testing and deployment
-  - Add database migration safety checks
+- [ ] Stripe subscription management.
+- [ ] Plan limits wired to billing tiers.
+- [ ] Team management and roles.
+- [ ] Project sharing and permissions.
+- [ ] Audit logs for compliance-sensitive actions.
 
-- **Containerization**
-  - Add Dockerfile for containerized deployment
-  - Consider Docker Compose for local development
-  - Add Kubernetes manifests for production
+### QA Workflow Enhancements
 
-## 9. Code Organization
+- [ ] Bulk operations for bug reports and test-case batches.
+- [ ] TestRail export/integration.
+- [ ] Jira/TestRail-style field mapping configuration.
+- [ ] Usage analytics dashboard.
+- [ ] Prompt versioning and prompt A/B testing.
+- [ ] Model selection based on task complexity.
 
-- **File Structure**
-  - Consider moving shared types to a central location
-  - Organize components by feature rather than type
-  - Add barrel exports (`index.ts`) for cleaner imports
+### DevOps & Deployment
 
-- **Configuration Management**
-  - Centralize environment-specific configurations
-  - Add feature flags for gradual rollouts
+- [ ] GitHub Actions CI pipeline.
+- [ ] Automated migration safety checks.
+- [ ] Dockerfile.
+- [ ] Docker Compose for local development.
+- [ ] Production database backup and recovery procedure.
+- [ ] CDN/cache strategy for static assets.
 
-## 10. Scalability Considerations
+### Code Organization
 
-- **Architecture**
-  - Consider microservices architecture for AI processing
-  - Implement message queues for heavy AI operations
-  - Add a CDN for static assets
+- [ ] Continue breaking down large workspace components.
+- [ ] Add feature-based component folders.
+- [ ] Add ADRs for auth, AI provider abstraction, persistence, and QA intelligence.
+- [ ] Add feature flags for gradual rollout.
 
-- **Database**
-  - Plan for database sharding if user base grows
-  - Implement data archiving strategies
-  - Add database backup and recovery procedures
+## Suggested Next Implementation Order
 
-## Priority Implementation Order
-
-- **High Priority**: Add linting, testing, and basic security measures
-- **Medium Priority**: Enhanced monitoring, error handling, and documentation
-- **Low Priority**: Advanced features, performance optimizations, and scalability improvements
-
-## Quick Wins
-
-- Add ESLint and Prettier (immediate code quality improvement)
-- Implement basic rate limiting
-- Add comprehensive error boundaries
-- Create API documentation
-- Add unit tests for critical services
-
-# TODO — Improvement Suggestions (Progress Tracker)
-
-## Implement plan: Rate limiting + HTTP 429 mapping
-
-- [x] Add `assertRateLimit` to `src/app/api/bug-reports/generate/route.ts`
-- [x] Add `assertRateLimit` to `src/app/api/test-cases/generate/route.ts`
-- [x] Update both routes to return HTTP 429 for quota/rate-limit errors
-
-- [x] Run `npm run lint`
-- [x] Run `npm run typecheck`
-- [x] Run `npm run test:unit`
-- [x] Run `npm run test:integration`
-
-
-
-  
+1. Refresh `openapi.yaml` to match current API routes.
+2. Add GitHub Actions for lint, typecheck, unit tests, and build.
+3. Add password reset and failed-login lockout.
+4. Add Sentry or equivalent hosted error tracking.
+5. Replace in-memory rate limiting with Redis/shared storage.
+6. Add Stripe billing and plan enforcement.
+7. Add team roles and audit logs.

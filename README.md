@@ -35,6 +35,10 @@ Optional auth:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
+Optional security:
+
+- `APP_ALLOWED_ORIGINS` comma-separated CORS allowlist, for example `http://localhost:3000`
+
 Notes:
 
 - At least one AI provider key must be configured for generation to work.
@@ -88,6 +92,7 @@ Current built-in monitoring:
 - generation audit logs stored in Prisma
 - usage events for quota tracking
 - health endpoint at `GET /api/health`
+- middleware security headers and API mutation rate limiting
 
 Useful runtime checks:
 
@@ -101,6 +106,13 @@ Current monitoring scope is lightweight and app-native. For production, add:
 - uptime monitoring
 - hosted log aggregation
 - alerting on health endpoint failures
+
+## Documentation
+
+- AI prompt approach: `docs/ai-prompt-engineering.md`
+- API versioning strategy: `docs/api-versioning-strategy.md`
+- Security and monitoring baseline: `docs/security-and-monitoring.md`
+- OpenAPI draft: `openapi.yaml`
 
 ## Main routes
 
