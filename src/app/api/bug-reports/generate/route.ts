@@ -10,7 +10,6 @@ import { createRequestId, logApiEvent, serializeError } from '@/server/monitorin
 import { assertWithinMonthlyQuota } from '@/server/services/quota';
 import { assertRateLimit } from '@/server/services/rate-limit';
 
-
 export async function POST(request: NextRequest) {
   const requestId = createRequestId();
   let userId: string | null = null;
@@ -32,7 +31,6 @@ export async function POST(request: NextRequest) {
       windowMs: 60 * 60 * 1000,
     });
     await assertWithinMonthlyQuota(user.id);
-
 
     requestBody = await request.json();
     const input = generateBugReportRequestSchema.parse(requestBody);
@@ -95,6 +93,5 @@ export async function POST(request: NextRequest) {
     });
 
     return jsonError('BUG_REPORT_GENERATION_FAILED', message, httpStatus, { requestId });
-
   }
 }

@@ -10,7 +10,6 @@ import { createRequestId, logApiEvent, serializeError } from '@/server/monitorin
 import { assertWithinMonthlyQuota } from '@/server/services/quota';
 import { assertRateLimit } from '@/server/services/rate-limit';
 
-
 export async function POST(request: NextRequest) {
   const requestId = createRequestId();
   let userId: string | null = null;
@@ -93,6 +92,5 @@ export async function POST(request: NextRequest) {
     });
 
     return jsonError('TEST_CASE_GENERATION_FAILED', message, httpStatus, { requestId });
-
   }
 }
