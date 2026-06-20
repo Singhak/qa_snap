@@ -37,3 +37,8 @@ export const LazySettingsPage = dynamic(
   () => import('@/components/workspace-pages').then((module) => module.SettingsPage),
   { loading: PageLoading }
 );
+
+export const LazyAcceptanceCriteriaPage = dynamic(
+  () => import('@/components/workspace-pages').then((module) => module.AcceptanceCriteriaPage),
+  { loading: PageLoading }
+);

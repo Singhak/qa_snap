@@ -26,6 +26,7 @@ import type {
   GenerateBugReportResponse,
   QaIntelligenceRunDto,
   SavedTestCaseBatchDto,
+  GenerateAcceptanceCriteriaResponse,
 } from '@/types/api';
 
 export function DashboardPage() {
@@ -1171,6 +1172,390 @@ export function SettingsPage() {
               </button>
             </div>
           </div>
+        </section>
+      </section>
+    </>
+  );
+}
+
+export function AcceptanceCriteriaPage() {
+  const { selectedProvider, projectDetail } = useWorkspace();
+
+  const [inputMode, setInputMode] = useState<'manual' | 'jira'>('manual');
+  const [storyDescription, setStoryDescription] = useState('');
+  const [jiraIssueKey, setJiraIssueKey] = useState('');
+  const [contextNotes, setContextNotes] = useState('');
+  const [isFetchingJira, setIsFetchingJira] = useState(false);
+  const [jiraPreview, setJiraPreview] = useState<{
+    key: string;
+    summary: string;
+    description: string;
+  } | null>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generatedOutput, setGeneratedOutput] = useState<GenerateAcceptanceCriteriaResponse | null>(
+    null
+  );
+
+  useEffect(() => {
+    setStoryDescription('');
+    setJiraIssueKey('');
+    setContextNotes('');
+    setJiraPreview(null);
+    setGeneratedOutput(null);
+    setError(null);
+  }, [projectDetail?.id]);
+
+  const handleFetchJira = async () => {
+    if (!projectDetail) {
+      setError('Please select a project first.');
+      return;
+    }
+    if (!jiraIssueKey.trim()) {
+      setError('Please enter a Jira issue key.');
+      return;
+    }
+
+    setIsFetchingJira(true);
+    setError(null);
+    setJiraPreview(null);
+
+    try {
+      const res = await fetch('/api/acceptance-criteria/jira-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectDetail.id,
+          issueKey: jiraIssueKey.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || data.message || 'Failed to fetch Jira story.');
+      }
+
+      setJiraPreview(data);
+      setStoryDescription(`Story Summary: ${data.summary}\n\nDescription: ${data.description}`);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while fetching the Jira story.');
+    } finally {
+      setIsFetchingJira(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!projectDetail) {
+      setError('Please select a project first.');
+      return;
+    }
+    if (!storyDescription.trim()) {
+      setError('Please provide a story description.');
+      return;
+    }
+    if (!selectedProvider) {
+      setError('Please select an AI provider in the top bar.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/acceptance-criteria/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectDetail.id,
+          storyDescription: storyDescription.trim(),
+          jiraIssueKey: inputMode === 'jira' ? jiraIssueKey.trim() : undefined,
+          contextNotes: contextNotes.trim() || undefined,
+          provider: selectedProvider,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(
+          data.error?.message || data.message || 'Failed to generate acceptance criteria.'
+        );
+      }
+
+      setGeneratedOutput(data);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during generation.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (!generatedOutput) return;
+    navigator.clipboard.writeText(generatedOutput.rawGherkin);
+  };
+
+  const handleDownload = () => {
+    if (!generatedOutput) return;
+    const blob = new Blob([generatedOutput.rawGherkin], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${generatedOutput.featureTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'feature'}.feature`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <>
+      <ActiveWorkspacePanel />
+      <section className="content-grid">
+        <section className="panel">
+          <SectionHeader eyebrow="Gherkin Generator" title="Acceptance Criteria" />
+          <div className="stack">
+            <div
+              className="tab-buttons"
+              style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
+            >
+              <button
+                className={`button ${inputMode === 'manual' ? '' : 'ghost'}`}
+                onClick={() => setInputMode('manual')}
+                type="button"
+              >
+                Manual Description
+              </button>
+              <button
+                className={`button ${inputMode === 'jira' ? '' : 'ghost'}`}
+                onClick={() => setInputMode('jira')}
+                type="button"
+              >
+                From Jira Ticket
+              </button>
+            </div>
+
+            {inputMode === 'jira' && (
+              <div
+                className="stack"
+                style={{
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                }}
+              >
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                  <div className="field" style={{ flex: 1, margin: 0 }}>
+                    <label htmlFor="jira-issue-key">Jira Issue Key</label>
+                    <input
+                      id="jira-issue-key"
+                      value={jiraIssueKey}
+                      onChange={(e) => setJiraIssueKey(e.target.value)}
+                      placeholder="e.g. PROJ-123"
+                    />
+                  </div>
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={handleFetchJira}
+                    disabled={isFetchingJira}
+                    style={{ height: '38px' }}
+                  >
+                    {isFetchingJira ? 'Fetching...' : 'Fetch Story'}
+                  </button>
+                </div>
+
+                {jiraPreview && (
+                  <div
+                    style={{
+                      fontSize: '0.875rem',
+                      marginTop: '0.75rem',
+                      borderLeft: '3px solid var(--accent, #6366f1)',
+                      paddingLeft: '0.75rem',
+                    }}
+                  >
+                    <p style={{ fontWeight: 600, color: 'var(--text-light, #f3f4f6)' }}>
+                      Preview: {jiraPreview.summary}
+                    </p>
+                    <p
+                      style={{
+                        color: 'var(--text-muted, #9ca3af)',
+                        whiteSpace: 'pre-wrap',
+                        maxHeight: '150px',
+                        overflowY: 'auto',
+                        marginTop: '0.25rem',
+                      }}
+                    >
+                      {jiraPreview.description || 'No description provided.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <TextAreaField
+              label="Story or Feature Description"
+              value={storyDescription}
+              onChange={setStoryDescription}
+            />
+
+            <TextAreaField
+              label="Additional Context / Notes (Optional)"
+              value={contextNotes}
+              onChange={setContextNotes}
+            />
+
+            <div className="button-row">
+              <button
+                className="button"
+                type="button"
+                onClick={handleGenerate}
+                disabled={isGenerating || !selectedProvider || !storyDescription.trim()}
+              >
+                {isGenerating ? 'Generating Criteria...' : 'Generate Gherkin'}
+              </button>
+            </div>
+
+            {!selectedProvider && (
+              <p className="meta warning-text">
+                Configure at least one AI provider in `.env.local`, then select it from the top bar.
+              </p>
+            )}
+
+            {error && (
+              <ServiceFailureNotice
+                title="Generation Failed"
+                message={error}
+                actionLabel="Retry"
+                onAction={handleGenerate}
+              />
+            )}
+          </div>
+        </section>
+
+        <section className="panel">
+          <SectionHeader eyebrow="Gherkin Format" title="Generated Scenarios" />
+          {generatedOutput ? (
+            <div className="stack">
+              <div
+                className="button-row"
+                style={{ justifyContent: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                <button className="button secondary" onClick={handleCopy} type="button">
+                  Copy Gherkin
+                </button>
+                <button className="button secondary" onClick={handleDownload} type="button">
+                  Download .feature
+                </button>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '1.25rem',
+                  fontFamily: 'var(--font-mono, monospace)',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap',
+                  overflowX: 'auto',
+                  color: '#e2e8f0',
+                }}
+              >
+                {generatedOutput.rawGherkin}
+              </div>
+
+              <div className="stack" style={{ marginTop: '1.5rem' }}>
+                <h4
+                  style={{
+                    margin: '0 0 0.5rem 0',
+                    fontSize: '1rem',
+                    color: 'var(--text-light, #f3f4f6)',
+                  }}
+                >
+                  Scenarios Breakdown
+                </h4>
+                {generatedOutput.scenarios.map((scenario, sIdx) => (
+                  <div
+                    key={sIdx}
+                    style={{
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      background: 'rgba(255, 255, 255, 0.01)',
+                      marginBottom: '0.75rem',
+                    }}
+                  >
+                    {scenario.tags && scenario.tags.length > 0 && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.25rem',
+                          flexWrap: 'wrap',
+                          marginBottom: '0.25rem',
+                        }}
+                      >
+                        {scenario.tags.map((tag, tIdx) => (
+                          <span
+                            key={tIdx}
+                            style={{
+                              color: 'var(--accent, #6366f1)',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {tag.startsWith('@') ? tag : `@${tag}`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <h5
+                      style={{
+                        margin: '0 0 0.75rem 0',
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        color: 'var(--text-light, #f3f4f6)',
+                      }}
+                    >
+                      Scenario: {scenario.name}
+                    </h5>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                        paddingLeft: '0.5rem',
+                      }}
+                    >
+                      {scenario.given.map((step, idx) => (
+                        <div key={idx} style={{ fontSize: '0.85rem' }}>
+                          <span style={{ color: '#f59e0b', fontWeight: 600 }}>Given </span>
+                          <span style={{ color: '#cbd5e1' }}>{step}</span>
+                        </div>
+                      ))}
+                      {scenario.when.map((step, idx) => (
+                        <div key={idx} style={{ fontSize: '0.85rem' }}>
+                          <span style={{ color: '#3b82f6', fontWeight: 600 }}>When </span>
+                          <span style={{ color: '#cbd5e1' }}>{step}</span>
+                        </div>
+                      ))}
+                      {scenario.then.map((step, idx) => (
+                        <div key={idx} style={{ fontSize: '0.85rem' }}>
+                          <span style={{ color: '#10b981', fontWeight: 600 }}>Then </span>
+                          <span style={{ color: '#cbd5e1' }}>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState text="Generate acceptance criteria to view the Gherkin scenarios here." />
+          )}
         </section>
       </section>
     </>

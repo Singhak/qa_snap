@@ -450,6 +450,9 @@ export function WorkspaceShell({
         <NavLink href="/test-cases" active={pathname === '/test-cases'}>
           Test Cases
         </NavLink>
+        <NavLink href="/acceptance-criteria" active={pathname === '/acceptance-criteria'}>
+          Acceptance Criteria
+        </NavLink>
         <NavLink href="/intelligence" active={pathname === '/intelligence'}>
           Intelligence
         </NavLink>
